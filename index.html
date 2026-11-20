@@ -133,14 +133,41 @@ function drawJoshva(){
  ctx.restore();
 }
 function drawHouse(x,y,w,h){
- ctx.fillStyle="#b87b4b";ctx.fillRect(x,y+18,w,h-18);
- ctx.fillStyle="#8b4934";ctx.beginPath();ctx.moveTo(x-8,y+20);ctx.lineTo(x+w/2,y-8);ctx.lineTo(x+w+8,y+20);ctx.closePath();ctx.fill();
- ctx.fillStyle="#e2c58d";ctx.fillRect(x+9,y+30,17,18);ctx.fillRect(x+w-27,y+30,17,18);
- ctx.fillStyle="#563c2b";ctx.fillRect(x+w/2-9,y+h-25,18,25);ctx.fillStyle="#6d4a32";ctx.fillRect(x+4,y+h-5,w-8,5);
+ // Warm village cottage with layered roof, plaster, timber and windows
+ ctx.fillStyle="rgba(0,0,0,.16)";ctx.beginPath();ctx.ellipse(x+w/2,y+h+5,w*.62,8,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#d5b17c";ctx.fillRect(x,y+18,w,h-18);
+ ctx.fillStyle="#a66d45";ctx.fillRect(x+4,y+22,w-8,h-25);
+ ctx.fillStyle="#d8b987";ctx.fillRect(x+7,y+25,w-14,h-29);
+ ctx.fillStyle="#8b4934";ctx.beginPath();ctx.moveTo(x-10,y+21);ctx.lineTo(x+w/2,y-10);ctx.lineTo(x+w+10,y+21);ctx.closePath();ctx.fill();
+ ctx.fillStyle="#b96542";ctx.beginPath();ctx.moveTo(x-4,y+20);ctx.lineTo(x+w/2,y-5);ctx.lineTo(x+w+4,y+20);ctx.closePath();ctx.fill();
+ ctx.strokeStyle="#77432e";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x-7,y+22);ctx.lineTo(x+w/2,y-8);ctx.lineTo(x+w+7,y+22);ctx.stroke();
+ for(const wx of [x+10,x+w-27]){
+  ctx.fillStyle="#754a32";ctx.fillRect(wx-2,y+29,21,23);ctx.fillStyle="#8ed1dc";ctx.fillRect(wx,y+31,17,19);
+  ctx.strokeStyle="#754a32";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(wx+8,y+31);ctx.lineTo(wx+8,y+50);ctx.moveTo(wx,y+40);ctx.lineTo(wx+17,y+40);ctx.stroke();
+ }
+ ctx.fillStyle="#62422c";ctx.fillRect(x+w/2-10,y+h-26,20,26);ctx.fillStyle="#8b6543";ctx.fillRect(x+w/2-7,y+h-23,14,23);
+ ctx.fillStyle="#d4a35f";ctx.beginPath();ctx.arc(x+w/2+5,y+h-14,1.8,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#6d4a32";ctx.fillRect(x+4,y+h-5,w-8,5);
 }
 function drawTree(x,y){
- ctx.fillStyle="#6c4928";ctx.fillRect(x-5,y+10,10,23);ctx.fillStyle="#2e6935";ctx.beginPath();ctx.arc(x,y,22,0,Math.PI*2);ctx.fill();
- ctx.fillStyle="#438744";ctx.beginPath();ctx.arc(x-12,y-7,15,0,Math.PI*2);ctx.arc(x+12,y-6,15,0,Math.PI*2);ctx.arc(x,y-16,15,0,Math.PI*2);ctx.fill();ctx.fillStyle="#75b85b";ctx.beginPath();ctx.arc(x-5,y-15,5,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="rgba(0,0,0,.17)";ctx.beginPath();ctx.ellipse(x+3,y+31,24,7,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#704625";ctx.fillRect(x-6,y+7,12,27);ctx.fillStyle="#8d6035";ctx.fillRect(x-3,y+9,3,23);
+ ctx.fillStyle="#28623a";ctx.beginPath();ctx.arc(x,y-1,23,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#347b40";ctx.beginPath();ctx.arc(x-13,y-8,16,0,Math.PI*2);ctx.arc(x+13,y-7,16,0,Math.PI*2);ctx.arc(x,y-18,16,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#62a94f";ctx.beginPath();ctx.arc(x-7,y-18,7,0,Math.PI*2);ctx.arc(x+10,y-12,6,0,Math.PI*2);ctx.arc(x-16,y-5,5,0,Math.PI*2);ctx.fill();
+}
+function drawBush(x,y){
+ ctx.fillStyle="#28633b";ctx.beginPath();ctx.arc(x-8,y,11,0,Math.PI*2);ctx.arc(x+4,y-5,13,0,Math.PI*2);ctx.arc(x+14,y+2,9,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#5da84e";ctx.beginPath();ctx.arc(x-6,y-5,4,0,Math.PI*2);ctx.arc(x+8,y-8,4,0,Math.PI*2);ctx.fill();
+}
+function drawFence(x,y,count,step){
+ ctx.strokeStyle="#79552f";ctx.lineWidth=4;
+ for(let i=0;i<count;i++){ctx.fillStyle="#9a7041";ctx.fillRect(x+i*step,y-8,4,23)}
+ ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+(count-1)*step,y);ctx.moveTo(x,y+9);ctx.lineTo(x+(count-1)*step,y+9);ctx.stroke();
+}
+function drawFlower(x,y){
+ ctx.fillStyle="#e8d5a0";ctx.beginPath();ctx.arc(x,y,2,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#d96f91";for(let a=0;a<Math.PI*2;a+=Math.PI/2){ctx.beginPath();ctx.arc(x+Math.cos(a)*3,y+Math.sin(a)*3,2,0,Math.PI*2);ctx.fill();}
 }
 function draw(){
  ctx.clearRect(0,0,600,400);
@@ -149,6 +176,9 @@ function draw(){
  ctx.fillStyle="#c9ad78";ctx.beginPath();ctx.moveTo(0,155);ctx.quadraticCurveTo(170,175,260,230);ctx.quadraticCurveTo(420,285,600,245);ctx.lineTo(600,300);ctx.quadraticCurveTo(400,330,230,260);ctx.quadraticCurveTo(100,205,0,205);ctx.closePath();ctx.fill();
  drawHouse(34,55,78,65);drawHouse(485,55,78,65);drawHouse(475,300,76,62);
  drawTree(160,70);drawTree(430,115);drawTree(100,310);drawTree(535,215);drawTree(355,330);
+ drawBush(205,105);drawBush(285,330);drawBush(445,285);drawBush(70,235);drawBush(565,85);
+ drawFence(115,284,5,14);drawFence(390,55,5,14);
+ for(let i=0;i<26;i++)drawFlower((i*97+21)%600,(i*61+17)%400);
  for(let i=0;i<18;i++){ctx.fillStyle="#8c8b78";ctx.beginPath();ctx.ellipse((i*41+23)%600,(i*67+19)%400,3,2,0,0,Math.PI*2);ctx.fill();}
  enemies.forEach(m=>{
  ctx.font="30px Arial";ctx.fillText("👹",m.x-12,m.y+10);
