@@ -48,6 +48,11 @@ function tree(x,z){box(x,.8,z,.35,1.6,.35,wood);for(let k=0;k<3;k++){let t=new T
 function house(x,z){box(x,1.2,z,4,2.4,3.4,plaster);let r=new THREE.Mesh(new THREE.ConeGeometry(3.05,1.65,4),roof);r.rotation.y=Math.PI/4;r.position.set(x,2.7,z);r.castShadow=true;scene.add(r);box(x,0.9,z+1.73,.85,1.8,.12,wood);box(x-1.15,1.45,z+1.76,.7,.65,.12,mat(0x8bc4d4));box(x+1.15,1.45,z+1.76,.7,.65,.12,mat(0x8bc4d4));for(let side of [-1,1]){box(x+side*1.65,1.2,z+1.76,.08,2.35,.08,wood)}box(x,2.35,z+1.77,1.1,.12,.12,wood);}
 house(-10,-9);house(10,-13);house(-12,12);house(12,13);
 for(const p of [[-18,-18],[-16,3],[-19,16],[18,-5],[17,18],[8,22],[-7,24],[23,7],[6,-24],[-23,-5]])tree(...p);
+// Rolling 3D hills, flowers and warm village lanterns for a richer world
+const hillMat=mat(0x6f9f65);for(const h of [[-30,-25,7],[28,-28,9],[-32,22,8],[31,24,10]]){const hill=new THREE.Mesh(new THREE.SphereGeometry(h[2],16,12),hillMat);hill.position.set(h[0],-h[2]*.35,h[1]);hill.scale.y=.65;scene.add(hill);}
+const flowerMats=[mat(0xffd66e),mat(0xff8fb3),mat(0xffffff)];for(let i=0;i<110;i++){const x=(Math.random()-.5)*42,z=(Math.random()-.5)*46;if(Math.abs(x)<3&&Math.abs(z)<15)continue;const f=part(scene,new THREE.SphereGeometry(.055,7,6),flowerMats[i%3],x,.18,z);f.scale.set(1,1.4,1);}
+function lantern(x,z){box(x,.9,z,.14,.8,.14,wood);box(x,1.35,z,.42,.38,.42,gold);const glow=new THREE.PointLight(0xffbd62,.55,5);glow.position.set(x,1.45,z);scene.add(glow);const bulb=part(scene,new THREE.SphereGeometry(.12,10,8),mat(0xffe8a6),x,1.45,z);bulb.material.emissive=new THREE.Color(0xffa43c);bulb.material.emissiveIntensity=.7;}
+for(const p of [[-4,6],[4,6],[-4,-8],[4,-8],[-8,0],[8,0]])lantern(...p);
 for(let i=0;i<12;i++){box(-5+i*.9,.45,8,.12,.9,.12,wood);box(-5+i*.9,.45,10,.12,.9,.12,wood)}box(0,.8,9,11,.12,.12,wood);
 const hero=new THREE.Group();scene.add(hero);
 const armor=mat(0x354d72,.7),silver=mat(0xc4d0dc,.45),skin=mat(0xc98e63,.85),dark=mat(0x252b35,.9),gold=mat(0xd5a747,.5),cloth=mat(0x6f2635,.95),leather=mat(0x59402b,.9);
@@ -60,6 +65,14 @@ part(hero,new THREE.CylinderGeometry(.31,.27,.08,12),leather,0,.96,0);
 part(hero,new THREE.CylinderGeometry(.29,.29,.07,12),gold,0,.91,.01);
 const chest=part(hero,new THREE.SphereGeometry(1,16,12),silver,0,1.34,.16);chest.scale.set(.27,.22,.09);
 for(let side of [-1,1]){const shoulder=part(hero,new THREE.SphereGeometry(.17,12,10),armor,side*.34,1.48,0);shoulder.scale.set(1,.8,1);part(hero,new THREE.SphereGeometry(.1,10,8),gold,side*.34,1.49,.04);}
+// 3D hero details: cloak, belt pouch, helmet trim and boot accents
+const capeGeo=new THREE.ConeGeometry(.48,.92,5);const cape=part(hero,capeGeo,cloth,0,.98,-.22);cape.rotation.x=Math.PI/2.2;cape.scale.set(1,.85,1);
+part(hero,new THREE.BoxGeometry(.48,.055,.26),leather,0,1.02,.02);
+part(hero,new THREE.BoxGeometry(.09,.1,.05),gold,0,1.02,.17);
+part(hero,new THREE.BoxGeometry(.13,.18,.12),leather,.23,.82,.04);
+part(hero,new THREE.BoxGeometry(.06,.08,.06),gold,.23,.82,.11);
+part(headGroup,new THREE.CylinderGeometry(.22,.24,.055,12),gold,0,.105,0);
+part(headGroup,new THREE.SphereGeometry(.06,10,8),cloth,0,.22,-.02);
 const headGroup=new THREE.Group();hero.add(headGroup);headGroup.position.set(0,1.82,0);
 part(headGroup,new THREE.SphereGeometry(.235,20,16),skin,0,0,0);
 const hair=part(headGroup,new THREE.SphereGeometry(.245,18,12),dark,0,.09,-.025);hair.scale.set(1,1,.96);
@@ -85,6 +98,7 @@ part(swordGrp,new THREE.CylinderGeometry(.045,.04,.22,8),leather,0,-.18,0);
 part(swordGrp,new THREE.BoxGeometry(.055,.62,.035),silver,0,.28,0);
 part(swordGrp,new THREE.BoxGeometry(.26,.055,.08),gold,0,-.02,0);
 part(swordGrp,new THREE.SphereGeometry(.055,10,8),gold,0,.6,0);
+const bladeGlow=new THREE.Mesh(new THREE.BoxGeometry(.035,.5,.025),new THREE.MeshBasicMaterial({color:0x9fe7ff}));bladeGlow.position.set(.035,.28,.025);swordGrp.add(bladeGlow);
 swordGrp.position.set(.48,1.18,.24);
 const bowGrp=new THREE.Group();hero.add(bowGrp);
 const bowCurve=new THREE.Mesh(new THREE.TorusGeometry(.42,.035,8,24,Math.PI),wood);bowGrp.add(bowCurve);bowCurve.rotation.z=Math.PI/2;
