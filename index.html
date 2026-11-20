@@ -80,6 +80,14 @@ part(hero,new THREE.CylinderGeometry(.31,.27,.08,12),leather,0,.96,0);
 part(hero,new THREE.CylinderGeometry(.29,.29,.07,12),gold,0,.91,.01);
 const chest=part(hero,new THREE.SphereGeometry(1,16,12),silver,0,1.34,.16);chest.scale.set(.27,.22,.09);
 for(let side of [-1,1]){const shoulder=part(hero,new THREE.SphereGeometry(.17,12,10),armor,side*.34,1.48,0);shoulder.scale.set(1,.8,1);part(hero,new THREE.SphereGeometry(.1,10,8),gold,side*.34,1.49,.04);}
+// Additional visible armor pieces are attached after the head group is created.
+// 3D hero details: cloak, belt pouch, helmet trim and boot accents
+const capeGeo=new THREE.ConeGeometry(.48,.92,5);const cape=part(hero,capeGeo,cloth,0,.98,-.22);cape.rotation.x=Math.PI/2.2;cape.scale.set(1,.85,1);
+part(hero,new THREE.BoxGeometry(.48,.055,.26),leather,0,1.02,.02);
+part(hero,new THREE.BoxGeometry(.09,.1,.05),gold,0,1.02,.17);
+part(hero,new THREE.BoxGeometry(.13,.18,.12),leather,.23,.82,.04);
+part(hero,new THREE.BoxGeometry(.06,.08,.06),gold,.23,.82,.11);
+const headGroup=new THREE.Group();hero.add(headGroup);headGroup.position.set(0,1.82,0);
 // Additional visible armor pieces: helmet, shoulder plates, bracers and shin guards
 const helmet=part(headGroup,new THREE.SphereGeometry(.25,16,10),armor,0,.12,0);helmet.scale.set(1.08,.48,1.05);
 part(headGroup,new THREE.BoxGeometry(.34,.06,.24),gold,0,.19,.02);
@@ -90,13 +98,6 @@ for(let side of [-1,1]){
  part(hero,new THREE.BoxGeometry(.21,.08,.18),gold,side*.15,.26,.1);
 }
 part(hero,new THREE.BoxGeometry(.4,.12,.29),silver,0,1.08,.19);
-// 3D hero details: cloak, belt pouch, helmet trim and boot accents
-const capeGeo=new THREE.ConeGeometry(.48,.92,5);const cape=part(hero,capeGeo,cloth,0,.98,-.22);cape.rotation.x=Math.PI/2.2;cape.scale.set(1,.85,1);
-part(hero,new THREE.BoxGeometry(.48,.055,.26),leather,0,1.02,.02);
-part(hero,new THREE.BoxGeometry(.09,.1,.05),gold,0,1.02,.17);
-part(hero,new THREE.BoxGeometry(.13,.18,.12),leather,.23,.82,.04);
-part(hero,new THREE.BoxGeometry(.06,.08,.06),gold,.23,.82,.11);
-const headGroup=new THREE.Group();hero.add(headGroup);headGroup.position.set(0,1.82,0);
 part(headGroup,new THREE.CylinderGeometry(.22,.24,.055,12),gold,0,.105,0);
 part(headGroup,new THREE.SphereGeometry(.06,10,8),cloth,0,.22,-.02);
 part(headGroup,new THREE.SphereGeometry(.235,20,16),skin,0,0,0);
