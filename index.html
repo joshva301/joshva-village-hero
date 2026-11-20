@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Joshva Village Hero — 3D</title>
+<title>Joshva Village Hero — Realistic 3D</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#172b20;color:#fff;font-family:Arial,sans-serif;text-align:center;overflow:hidden}
 h2{margin:8px 0;font-size:20px}.help{font-size:12px;margin:4px 0 8px}
@@ -32,18 +32,20 @@ button.active{background:#b87922;border-color:#ffe29a}
 const host=document.getElementById('game'),hud=document.getElementById('hud');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x9bd4f4);scene.fog=new THREE.Fog(0x9bd4f4,22,70);
 const camera=new THREE.PerspectiveCamera(58,1,.1,120);
-const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputEncoding=THREE.sRGBEncoding;host.appendChild(renderer.domElement);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;host.appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xe4f4ff,0x55703b,1.5));
-const sun=new THREE.DirectionalLight(0xfff1d6,2.1);sun.position.set(-12,22,8);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
+const sun=new THREE.DirectionalLight(0xfff1d6,2.1);sun.position.set(-12,22,8);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-28;sun.shadow.camera.right=28;sun.shadow.camera.top=28;sun.shadow.camera.bottom=-28;sun.shadow.bias=-0.0004;scene.add(sun);
 const mat=(color,rough=1)=>new THREE.MeshStandardMaterial({color,roughness:rough});
 const grass=mat(0x64a84e),pathmat=mat(0xc6aa78),wood=mat(0x81532f),roof=mat(0x9a4936),plaster=mat(0xe1c797),leaf=mat(0x2e783d),leaf2=mat(0x4b9948),stone=mat(0x87917d);
 function box(x,y,z,sx,sy,sz,m){const o=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
 function sphere(x,y,z,r,m){const o=new THREE.Mesh(new THREE.SphereGeometry(r,10,8),m);o.position.set(x,y,z);o.castShadow=true;scene.add(o);return o}
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(100,100),grass);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+const groundCanvas=document.createElement('canvas');groundCanvas.width=groundCanvas.height=256;const gc=groundCanvas.getContext('2d');gc.fillStyle='#79a957';gc.fillRect(0,0,256,256);for(let i=0;i<1800;i++){gc.fillStyle=['#6d9d4b','#87b35d','#557e3d','#a0bd70'][Math.floor(Math.random()*4)];gc.globalAlpha=.22+Math.random()*.25;gc.fillRect(Math.random()*256,Math.random()*256,1+Math.random()*3,1+Math.random()*3)}gc.globalAlpha=1;const groundTex=new THREE.CanvasTexture(groundCanvas);groundTex.wrapS=groundTex.wrapT=THREE.RepeatWrapping;groundTex.repeat.set(8,8);grass.map=groundTex;grass.color.set(0xffffff);
 const path=new THREE.Mesh(new THREE.PlaneGeometry(5,65),pathmat);path.rotation.x=-Math.PI/2;path.position.set(0,.012,0);scene.add(path);
+const pathCanvas=document.createElement('canvas');pathCanvas.width=pathCanvas.height=256;const pc=pathCanvas.getContext('2d');pc.fillStyle='#c6aa78';pc.fillRect(0,0,256,256);for(let i=0;i<900;i++){pc.fillStyle=['#ad9264','#d5bd8f','#927b56'][Math.floor(Math.random()*3)];pc.globalAlpha=.2+Math.random()*.35;pc.fillRect(Math.random()*256,Math.random()*256,2+Math.random()*5,1+Math.random()*3)}pc.globalAlpha=1;const pathTex=new THREE.CanvasTexture(pathCanvas);pathTex.wrapS=pathTex.wrapT=THREE.RepeatWrapping;pathTex.repeat.set(1,12);pathmat.map=pathTex;
 for(let i=0;i<80;i++){let x=(Math.random()-0.5)*46,z=(Math.random()-0.5)*50;if(Math.abs(x)<3)continue;let peb=new THREE.Mesh(new THREE.SphereGeometry(.08+Math.random()*.13,6,5),stone);peb.position.set(x,.06,z);peb.scale.y=.4;scene.add(peb)}
 function tree(x,z){box(x,.8,z,.35,1.6,.35,wood);for(let k=0;k<3;k++){let t=new THREE.Mesh(new THREE.ConeGeometry(1.15-k*.18,1.7,7),k===1?leaf2:leaf);t.position.set(x,1.6+k*.65,z);t.castShadow=true;scene.add(t)}}
-function house(x,z){box(x,1.2,z,4,2.4,3.4,plaster);let r=new THREE.Mesh(new THREE.ConeGeometry(3.1,1.6,4),roof);r.rotation.y=Math.PI/4;r.position.set(x,2.7,z);r.castShadow=true;scene.add(r);box(x,0.9,z+1.73,.85,1.8,.12,wood);box(x-1.15,1.45,z+1.76,.7,.65,.12,mat(0x8bc4d4));box(x+1.15,1.45,z+1.76,.7,.65,.12,mat(0x8bc4d4))}
+function house(x,z){box(x,1.2,z,4,2.4,3.4,plaster);let r=new THREE.Mesh(new THREE.ConeGeometry(3.05,1.65,4),roof);r.rotation.y=Math.PI/4;r.position.set(x,2.7,z);r.castShadow=true;scene.add(r);box(x,0.9,z+1.73,.85,1.8,.12,wood);box(x-1.15,1.45,z+1.76,.7,.65,.12,mat(0x8bc4d4));box(x+1.15,1.45,z+1.76,.7,.65,.12,mat(0x8bc4d4));for(let side of [-1,1]){box(x+side*1.65,1.2,z+1.76,.08,2.35,.08,wood)}box(x,2.35,z+1.77,1.1,.12,.12,wood);}
 house(-10,-9);house(10,-13);house(-12,12);house(12,13);
 for(const p of [[-18,-18],[-16,3],[-19,16],[18,-5],[17,18],[8,22],[-7,24],[23,7],[6,-24],[-23,-5]])tree(...p);
 for(let i=0;i<12;i++){box(-5+i*.9,.45,8,.12,.9,.12,wood);box(-5+i*.9,.45,10,.12,.9,.12,wood)}box(0,.8,9,11,.12,.12,wood);
@@ -53,10 +55,10 @@ function part(parent,g,m,x,y,z){let o=new THREE.Mesh(g,m);o.position.set(x,y,z);
 part(hero,new THREE.BoxGeometry(.65,.85,.38),armor,0,1.15,0);part(hero,new THREE.BoxGeometry(.55,.45,.4),silver,0,1.3,.04);part(hero,new THREE.SphereGeometry(.27,12,10),skin,0,1.85,0);part(hero,new THREE.SphereGeometry(.28,10,8),dark,0,2.03,-.04);
 part(hero,new THREE.BoxGeometry(.48,.08,.45),gold,0,1.72,0);
 const limbs=[];
-for(let side of [-1,1]){let arm=part(hero,new THREE.BoxGeometry(.18,.55,.18),skin,side*.46,1.15,0);arm.rotation.z=side*.2;limbs.push(arm);part(hero,new THREE.BoxGeometry(.2,.48,.2),dark,side*.22,.4,0)}
+for(let side of [-1,1]){part(hero,new THREE.SphereGeometry(.16,12,8),silver,side*.39,1.48,0);let arm=part(hero,new THREE.BoxGeometry(.18,.48,.18),skin,side*.46,1.15,0);arm.rotation.z=side*.2;limbs.push(arm);part(hero,new THREE.BoxGeometry(.2,.48,.2),dark,side*.22,.4,0);part(hero,new THREE.BoxGeometry(.24,.22,.25),armor,side*.22,.58,.02);}
 const swordGrp=new THREE.Group();hero.add(swordGrp);part(swordGrp,new THREE.BoxGeometry(.08,.55,.09),wood,0,-.18,0);part(swordGrp,new THREE.BoxGeometry(.08,.7,.06),silver,0,.35,0);part(swordGrp,new THREE.BoxGeometry(.36,.08,.1),gold,0,-.02,0);swordGrp.position.set(.55,1.2,.22);
 const bowGrp=new THREE.Group();hero.add(bowGrp);let bow=part(bowGrp,new THREE.TorusGeometry(.42,.035,8,18,Math.PI),wood,0,0,0);bow.rotation.z=Math.PI/2;let string=part(bowGrp,new THREE.CylinderGeometry(.015,.015,.78,5),silver,0,0,0);string.rotation.z=Math.PI/2;bowGrp.position.set(.56,1.15,.2);bowGrp.visible=false;
-const enemies=[];function enemy(x,z){let g=new THREE.Group();scene.add(g);part(g,new THREE.SphereGeometry(.32,10,8),mat(0x7e9f52),0,1.45,0);part(g,new THREE.BoxGeometry(.55,.65,.4),mat(0x55763b),0,.85,0);for(let s of [-1,1]){part(g,new THREE.BoxGeometry(.15,.45,.15),mat(0x4b5b32),s*.2,.35,0);part(g,new THREE.BoxGeometry(.12,.45,.12),mat(0x7e9f52),s*.4,.9,0)}g.position.set(x,0,z);g.userData.hp=3;g.userData.cool=0;enemies.push(g)}enemy(-8,2);enemy(9,2);enemy(0,-17);
+const enemies=[];function enemy(x,z){let g=new THREE.Group();scene.add(g);part(g,new THREE.SphereGeometry(.28,14,10),mat(0x7e9f52),0,1.42,0);part(g,new THREE.BoxGeometry(.5,.62,.36),mat(0x55763b),0,.85,0);part(g,new THREE.BoxGeometry(.42,.12,.38),mat(0x8e6a43),0,1.12,.02);for(let s of [-1,1]){part(g,new THREE.BoxGeometry(.15,.45,.15),mat(0x4b5b32),s*.2,.35,0);part(g,new THREE.BoxGeometry(.12,.45,.12),mat(0x7e9f52),s*.4,.9,0)}g.position.set(x,0,z);g.userData.hp=3;g.userData.cool=0;enemies.push(g)}enemy(-8,2);enemy(9,2);enemy(0,-17);
 let weapon='sword',joyX=0,joyY=0,joyActive=false,keys={},attackCooldown=0,hitFlash=0,health=100,defeated=0,walk=0;
 function selectWeapon(){weapon=weapon==='sword'?'bow':'sword';swordGrp.visible=weapon==='sword';bowGrp.visible=weapon==='bow';document.getElementById('weapon').textContent=weapon==='sword'?'🏹 BOW':'⚔️ SWORD'}
 document.getElementById('weapon').onclick=selectWeapon;
