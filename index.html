@@ -174,8 +174,15 @@ function drawJoshva(){
  // Small helmet brow / adventurer headband
  ctx.fillStyle="#c4ced7";ctx.fillRect(-8,-18,16,3);ctx.fillStyle="#e4bd55";ctx.fillRect(-2,-18,4,3);
  ctx.fillStyle="#202020";ctx.beginPath();ctx.arc(-3,-14,1.2,0,Math.PI*2);ctx.arc(3,-14,1.2,0,Math.PI*2);ctx.fill();
- // Equipment drawn beside the right hand
+ // Equipment: dual swords when Sword is selected, otherwise keep bow or magic.
  if(weapon==="sword"){
+  // Left sword
+  ctx.save();ctx.translate(-19,8+swing*.6);ctx.rotate(0.45+Math.sin(walkPhase)*.12);
+  ctx.strokeStyle="#dbe7ef";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,2);ctx.lineTo(0,-17);ctx.stroke();
+  ctx.strokeStyle="#f8f8f8";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(1,-4);ctx.lineTo(1,-17);ctx.stroke();
+  ctx.strokeStyle="#b78a43";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-5,1);ctx.lineTo(5,1);ctx.stroke();
+  ctx.strokeStyle="#49301e";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(0,3);ctx.lineTo(0,8);ctx.stroke();ctx.restore();
+  // Right sword
   ctx.save();ctx.translate(19,8-swing*.6);ctx.rotate(-0.45+Math.sin(walkPhase)*.12);
   ctx.strokeStyle="#dbe7ef";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,2);ctx.lineTo(0,-17);ctx.stroke();
   ctx.strokeStyle="#f8f8f8";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-1,-4);ctx.lineTo(-1,-17);ctx.stroke();
