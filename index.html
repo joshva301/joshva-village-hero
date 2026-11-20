@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -72,7 +71,7 @@ for(let i=0;i<12;i++){box(-5+i*.9,.45,8,.12,.9,.12,wood);box(-5+i*.9,.45,10,.12,
 const hero=new THREE.Group();scene.add(hero);
 const armor=mat(0x354d72,.7),silver=mat(0xc4d0dc,.45),skin=mat(0xc98e63,.85),dark=mat(0x252b35,.9),gold=mat(0xd5a747,.5),cloth=mat(0x6f2635,.95),leather=mat(0x59402b,.9);
 function part(parent,g,m,x,y,z){let o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;parent.add(o);return o}
-function capsule(parent,a,b,r,m){const d=new THREE.Vector3().subVectors(b,a),mesh=new THREE.Mesh(new THREE.CapsuleGeometry(r,Math.max(.01,d.length()-2*r),4,8),m);mesh.position.copy(a).add(b).multiplyScalar(.5);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());mesh.castShadow=true;parent.add(mesh);return mesh}
+function capsule(parent,a,b,r,m){const d=new THREE.Vector3().subVectors(b,a),len=d.length(),mid=a.clone().add(b).multiplyScalar(.5);const mesh=new THREE.Mesh(new THREE.CylinderGeometry(r,r,Math.max(.01,len-2*r),8),m);mesh.position.copy(mid);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());mesh.castShadow=true;parent.add(mesh);const capA=new THREE.Mesh(new THREE.SphereGeometry(r,8,6),m);capA.position.copy(a);capA.castShadow=true;parent.add(capA);const capB=new THREE.Mesh(new THREE.SphereGeometry(r,8,6),m);capB.position.copy(b);capB.castShadow=true;parent.add(capB);return mesh}
 function joint(parent,p,r,m){return part(parent,new THREE.SphereGeometry(r,12,10),m,p.x,p.y,p.z)}
 const torso=part(hero,new THREE.SphereGeometry(1,18,14),armor,0,1.18,0);torso.scale.set(.34,.48,.23);
 part(hero,new THREE.SphereGeometry(1,16,12),cloth,0,.76,-.01).scale.set(.29,.24,.21);
