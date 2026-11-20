@@ -50,40 +50,42 @@ house(-10,-9);house(10,-13);house(-12,12);house(12,13);
 for(const p of [[-18,-18],[-16,3],[-19,16],[18,-5],[17,18],[8,22],[-7,24],[23,7],[6,-24],[-23,-5]])tree(...p);
 for(let i=0;i<12;i++){box(-5+i*.9,.45,8,.12,.9,.12,wood);box(-5+i*.9,.45,10,.12,.9,.12,wood)}box(0,.8,9,11,.12,.12,wood);
 const hero=new THREE.Group();scene.add(hero);
-const armor=mat(0x354d72,.72),silver=mat(0xc4d0dc,.48),skin=mat(0xc98e63,.85),dark=mat(0x252b35,.9),gold=mat(0xd5a747,.5),cloth=mat(0x6f2635,.95),leather=mat(0x59402b,.9);
+const armor=mat(0x354d72,.7),silver=mat(0xc4d0dc,.45),skin=mat(0xc98e63,.85),dark=mat(0x252b35,.9),gold=mat(0xd5a747,.5),cloth=mat(0x6f2635,.95),leather=mat(0x59402b,.9);
 function part(parent,g,m,x,y,z){let o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;parent.add(o);return o}
-function limb(parent,a,b,r1,r2,m){const d=new THREE.Vector3().subVectors(b,a),mesh=new THREE.Mesh(new THREE.CylinderGeometry(r2,r1,d.length(),10),m);mesh.position.copy(a).add(b).multiplyScalar(.5);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());mesh.castShadow=true;parent.add(mesh);return mesh;}
-const torso=part(hero,new THREE.CapsuleGeometry(.29,.48,5,10),armor,0,1.18,0);torso.scale.set(1.05,1,0.72);
-part(hero,new THREE.BoxGeometry(.48,.34,.34),cloth,0,.78,-.01);
-part(hero,new THREE.BoxGeometry(.5,.08,.4),leather,0,.94,0);
-part(hero,new THREE.BoxGeometry(.42,.09,.38),gold,0,.95,.02);
+function capsule(parent,a,b,r,m){const d=new THREE.Vector3().subVectors(b,a),mesh=new THREE.Mesh(new THREE.CapsuleGeometry(r,Math.max(.01,d.length()-2*r),4,8),m);mesh.position.copy(a).add(b).multiplyScalar(.5);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());mesh.castShadow=true;parent.add(mesh);return mesh}
+function joint(parent,p,r,m){return part(parent,new THREE.SphereGeometry(r,12,10),m,p.x,p.y,p.z)}
+const torso=part(hero,new THREE.SphereGeometry(1,18,14),armor,0,1.18,0);torso.scale.set(.34,.48,.23);
+part(hero,new THREE.SphereGeometry(1,16,12),cloth,0,.76,-.01).scale.set(.29,.24,.21);
+part(hero,new THREE.CylinderGeometry(.31,.27,.08,12),leather,0,.96,0);
+part(hero,new THREE.CylinderGeometry(.29,.29,.07,12),gold,0,.91,.01);
+const chest=part(hero,new THREE.SphereGeometry(1,16,12),silver,0,1.34,.16);chest.scale.set(.27,.22,.09);
+for(let side of [-1,1]){const shoulder=part(hero,new THREE.SphereGeometry(.17,12,10),armor,side*.34,1.48,0);shoulder.scale.set(1,.8,1);part(hero,new THREE.SphereGeometry(.1,10,8),gold,side*.34,1.49,.04);}
 const headGroup=new THREE.Group();hero.add(headGroup);headGroup.position.set(0,1.82,0);
-part(headGroup,new THREE.SphereGeometry(.235,18,14),skin,0,0,0);
-part(headGroup,new THREE.SphereGeometry(.245,16,12,0,Math.PI*2,0,Math.PI*.58),dark,0,.09,-.015);
-part(headGroup,new THREE.BoxGeometry(.34,.09,.32),gold,0,.19,0);
-part(headGroup,new THREE.BoxGeometry(.08,.12,.06),skin,0,-.04,.22);
+part(headGroup,new THREE.SphereGeometry(.235,20,16),skin,0,0,0);
+const hair=part(headGroup,new THREE.SphereGeometry(.245,18,12),dark,0,.09,-.025);hair.scale.set(1,1,.96);
+part(headGroup,new THREE.SphereGeometry(.09,12,8),dark,0,.19,.02);
+part(headGroup,new THREE.SphereGeometry(.055,10,8),skin,0,-.07,.18);
 for(let side of [-1,1]){part(headGroup,new THREE.SphereGeometry(.035,8,6),dark,side*.085,.035,.205);part(headGroup,new THREE.BoxGeometry(.09,.025,.025),dark,side*.085,.08,.21);}
-const limbs=[];
+const armPivots=[],legPivots=[];
 for(let side of [-1,1]){
- part(hero,new THREE.SphereGeometry(.14,12,8),armor,side*.34,1.48,0);
- const armPivot=new THREE.Group();armPivot.position.set(side*.38,1.42,0);hero.add(armPivot);
- limb(armPivot,new THREE.Vector3(0,0,0),new THREE.Vector3(side*.05,-.28,.02),.105,.085,armor);
- part(armPivot,new THREE.SphereGeometry(.095,10,8),silver,side*.05,-.28,.02);
- limb(armPivot,new THREE.Vector3(side*.05,-.28,.02),new THREE.Vector3(side*.08,-.52,.12),.075,.06,skin);
- part(armPivot,new THREE.SphereGeometry(.075,10,8),skin,side*.08,-.52,.12);
- const legPivot=new THREE.Group();legPivot.position.set(side*.15,.72,0);hero.add(legPivot);
- limb(legPivot,new THREE.Vector3(0,0,0),new THREE.Vector3(0,-.3,0),.12,.1,dark);
- part(legPivot,new THREE.BoxGeometry(.23,.22,.3),armor,0,-.16,.02);
- limb(legPivot,new THREE.Vector3(0,-.3,0),new THREE.Vector3(0,-.58,.03),.085,.065,dark);
- part(legPivot,new THREE.BoxGeometry(.22,.12,.34),leather,0,-.58,.1);
- limbs.push(armPivot,legPivot);
+ const armPivot=new THREE.Group();armPivot.position.set(side*.36,1.43,0);hero.add(armPivot);armPivots.push(armPivot);
+ capsule(armPivot,new THREE.Vector3(0,0,0),new THREE.Vector3(side*.06,-.27,.015),.105,armor);
+ joint(armPivot,new THREE.Vector3(side*.06,-.27,.015),.09,silver);
+ capsule(armPivot,new THREE.Vector3(side*.06,-.27,.015),new THREE.Vector3(side*.08,-.5,.1),.075,skin);
+ joint(armPivot,new THREE.Vector3(side*.08,-.5,.1),.07,skin);
+ part(armPivot,new THREE.SphereGeometry(.08,10,8),leather,side*.08,-.54,.12);
+ const legPivot=new THREE.Group();legPivot.position.set(side*.15,.72,0);hero.add(legPivot);legPivots.push(legPivot);
+ capsule(legPivot,new THREE.Vector3(0,0,0),new THREE.Vector3(0,-.29,0),.13,dark);
+ joint(legPivot,new THREE.Vector3(0,-.29,0),.105,armor);
+ capsule(legPivot,new THREE.Vector3(0,-.29,0),new THREE.Vector3(0,-.57,.025),.09,dark);
+ part(legPivot,new THREE.SphereGeometry(.12,12,8),leather,0,-.58,.09);
 }
 const swordGrp=new THREE.Group();hero.add(swordGrp);
-part(swordGrp,new THREE.BoxGeometry(.07,.48,.08),leather,0,-.18,0);
-part(swordGrp,new THREE.BoxGeometry(.055,.66,.035),silver,0,.32,0);
-part(swordGrp,new THREE.BoxGeometry(.28,.06,.08),gold,0,-.02,0);
-part(swordGrp,new THREE.BoxGeometry(.11,.1,.09),gold,0,.66,0);
-swordGrp.position.set(.48,1.22,.25);
+part(swordGrp,new THREE.CylinderGeometry(.045,.04,.22,8),leather,0,-.18,0);
+part(swordGrp,new THREE.BoxGeometry(.055,.62,.035),silver,0,.28,0);
+part(swordGrp,new THREE.BoxGeometry(.26,.055,.08),gold,0,-.02,0);
+part(swordGrp,new THREE.SphereGeometry(.055,10,8),gold,0,.6,0);
+swordGrp.position.set(.48,1.18,.24);
 const bowGrp=new THREE.Group();hero.add(bowGrp);
 const bowCurve=new THREE.Mesh(new THREE.TorusGeometry(.42,.035,8,24,Math.PI),wood);bowGrp.add(bowCurve);bowCurve.rotation.z=Math.PI/2;
 let string=part(bowGrp,new THREE.CylinderGeometry(.012,.012,.78,5),silver,0,0,0);string.rotation.z=Math.PI/2;
@@ -102,10 +104,10 @@ function resize(){let w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,
 const clock=new THREE.Clock();
 function loop(){requestAnimationFrame(loop);let dt=Math.min(clock.getDelta(),.05);attackCooldown=Math.max(0,attackCooldown-dt);
 let mx=joyX+(keys.a||keys.arrowleft?-1:0)+(keys.d||keys.arrowright?1:0),mz=joyY+(keys.w||keys.arrowup?-1:0)+(keys.s||keys.arrowdown?1:0);let len=Math.hypot(mx,mz);if(len>1){mx/=len;mz/=len}
-if(len>.08){hero.position.x+=mx*5*dt;hero.position.z+=mz*5*dt;hero.rotation.y=Math.atan2(mx,mz);walk+=dt*10;hero.position.y=Math.abs(Math.sin(walk))*.08;limbs.forEach((a,i)=>a.rotation.x=Math.sin(walk+(i*Math.PI))*0.45)}
+if(len>.08){hero.position.x+=mx*5*dt;hero.position.z+=mz*5*dt;hero.rotation.y=Math.atan2(mx,mz);walk+=dt*10;hero.position.y=Math.abs(Math.sin(walk))*.045;armPivots[0].rotation.x=Math.sin(walk)*.5;armPivots[1].rotation.x=-Math.sin(walk)*.5;legPivots[0].rotation.x=-Math.sin(walk)*.65;legPivots[1].rotation.x=Math.sin(walk)*.65}
 hero.position.x=Math.max(-25,Math.min(25,hero.position.x));hero.position.z=Math.max(-25,Math.min(25,hero.position.z));
 enemies.forEach(e=>{if(!e.visible)return;let dx=hero.position.x-e.position.x,dz=hero.position.z-e.position.z,d=Math.hypot(dx,dz);if(d>2.1){e.position.x+=dx/d*1.1*dt;e.position.z+=dz/d*1.1*dt;e.rotation.y=Math.atan2(dx,dz)}else{e.userData.cool-=dt;if(e.userData.cool<=0){health=Math.max(0,health-5);e.userData.cool=1.2}}});
-if(attackAnim>0){attackAnim=Math.max(0,attackAnim-dt);const swing=(.32-attackAnim)/.32;swordGrp.rotation.x=Math.sin(swing*Math.PI)*-1.4;swordGrp.rotation.z=Math.sin(swing*Math.PI)*.45;limbs[1].rotation.x=-Math.sin(swing*Math.PI)*.9;}else{swordGrp.rotation.x=0;swordGrp.rotation.z=0;limbs[1].rotation.x=0;}
+if(attackAnim>0){attackAnim=Math.max(0,attackAnim-dt);const swing=(.32-attackAnim)/.32;swordGrp.rotation.x=Math.sin(swing*Math.PI)*-1.4;swordGrp.rotation.z=Math.sin(swing*Math.PI)*.45;armPivots[1].rotation.x=-Math.sin(swing*Math.PI)*.9;}else{swordGrp.rotation.x=0;swordGrp.rotation.z=0;armPivots[1].rotation.x=0;}
 projectiles=projectiles.filter(p=>{if(!p.target.visible){scene.remove(p.mesh);return false;}const destination=p.target.position.clone();destination.y=1.15;const delta=destination.sub(p.mesh.position);if(delta.length()<.45){p.target.userData.hp--;if(p.target.userData.hp<=0){p.target.visible=false;defeated++;}scene.remove(p.mesh);return false;}p.mesh.position.add(delta.normalize().multiplyScalar(p.speed*dt));return true;});
 let camOffset=new THREE.Vector3(0,6,9).applyAxisAngle(new THREE.Vector3(0,1,0),hero.rotation.y);camera.position.lerp(new THREE.Vector3(hero.position.x+camOffset.x,hero.position.y+camOffset.y,hero.position.z+camOffset.z),.09);camera.lookAt(hero.position.x,hero.position.y+1,hero.position.z);
 hud.textContent='Health: '+health+' • Enemies: '+(enemies.filter(e=>e.visible).length)+' • '+weapon.toUpperCase()+(hud.dataset.notice?' • '+hud.dataset.notice:'');if(health<=0)hud.textContent='Game Over — Refresh to restart';if(defeated===3)hud.textContent='Village Clear! • Refresh to play again';
