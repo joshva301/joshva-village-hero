@@ -29,6 +29,7 @@ button{color:white;font-weight:bold;cursor:pointer}.weapon{border:2px solid #dce
 <button class="weapon" data-weapon="magic">✨ Magic (3)</button>
 </div>
 <h3 id="score">Health: 100 | Enemies defeated: 0</h3>
+<button id="restart" class="weapon">🔄 Restart Game</button>
 <div id="controls" aria-label="Touch game controls">
 <div id="joystick"><div id="stick"></div></div>
 <div id="action-buttons">
@@ -41,9 +42,14 @@ button{color:white;font-weight:bold;cursor:pointer}.weapon{border:2px solid #dce
 <script>
 const c=document.getElementById("game"),ctx=c.getContext("2d");
 const player={x:300,y:200,h:100};
-let enemies=[],keys={},score=0,weapon="sword",attackFlash=0;
-function resetEnemies(){enemies=[];for(let i=0;i<5;i++)enemies.push({x:65+i*115,y:75+(i%2)*235,h:2});score=0}
-resetEnemies();
+let enemies=[],keys={},score=0,weapon="sword",attackFlash=0,gameOver=false,won=false,invulnerableUntil=0;
+function resetGame(){
+ player.x=300;player.y=200;player.h=100;enemies=[];
+ for(let i=0;i<5;i++)enemies.push({x:65+i*115,y:75+(i%2)*235,h:3,lastHit:0});
+ score=0;gameOver=false;won=false;invulnerableUntil=0;keys={};
+}
+resetGame();
+document.getElementById("restart").addEventListener("click",resetGame);
 function chooseWeapon(name){
  weapon=name;
  document.querySelectorAll(".weapon").forEach(b=>b.classList.toggle("selected",b.dataset.weapon===name));
@@ -72,7 +78,7 @@ function resetJoystick(){joystickActive=false;joyX=0;joyY=0;stick.style.left="36
 joystick.addEventListener("pointerup",resetJoystick);joystick.addEventListener("pointercancel",resetJoystick);
 ["sword","bow","magic"].forEach(name=>document.getElementById(name+"-btn").addEventListener("pointerdown",e=>{e.preventDefault();chooseWeapon(name);attack()}));
 function attack(){
- if(!enemies.length)return;
+ if(gameOver||won||!enemies.length)return;
  attackFlash=12;
  const range=weapon==="sword"?68:weapon==="bow"?230:145;
  const damage=weapon==="sword"?2:weapon==="bow"?1:2;
@@ -84,23 +90,41 @@ function attack(){
   enemies.forEach(m=>{if(Math.hypot(m.x-player.x,m.y-player.y)<range)m.h-=damage});
  }
  enemies=enemies.filter(m=>m.h>0);score=5-enemies.length;
+ if(enemies.length===0)won=true;
 }
 function draw(){
  ctx.clearRect(0,0,600,400);ctx.fillStyle="#397d38";ctx.fillRect(0,0,600,400);
  ctx.fillStyle="#d9c18b";ctx.fillRect(0,0,600,35);ctx.fillRect(0,365,600,35);
  ctx.font="30px Arial";ctx.fillText("🏡",40,90);ctx.fillText("🌳",500,100);ctx.fillText("🌳",80,330);
- enemies.forEach(m=>{ctx.font="30px Arial";ctx.fillText("👹",m.x-12,m.y+10);ctx.font="12px Arial";ctx.fillStyle="#fff";ctx.fillText("HP "+m.h,m.x-12,m.y-12);ctx.fillStyle="#397d38"});
- ctx.font="30px Arial";ctx.fillText("🧑",player.x-15,player.y+10);
+ enemies.forEach(m=>{
+ ctx.font="30px Arial";ctx.fillText("👹",m.x-12,m.y+10);
+ ctx.fillStyle="#5b1d1d";ctx.fillRect(m.x-15,m.y-22,30,5);
+ ctx.fillStyle="#7ee36b";ctx.fillRect(m.x-15,m.y-22,30*(m.h/3),5);
+ ctx.fillStyle="#397d38";
+});
+ ctx.font="30px Arial";ctx.fillText((Date.now()<invulnerableUntil?"🛡️":"🧑"),player.x-15,player.y+10);
  ctx.fillStyle="#fff";ctx.font="18px Arial";ctx.fillText("Joshva",player.x-25,player.y-15);
  if(attackFlash>0){ctx.font="27px Arial";ctx.fillText(weapon==="sword"?"⚔️":weapon==="bow"?"➶":"✨",player.x+18,player.y-5);attackFlash--}
  document.getElementById("score").innerText="Health: "+player.h+" | Enemies defeated: "+score+" | Weapon: "+weapon.toUpperCase();
- if(enemies.length===0){ctx.fillStyle="#fff";ctx.font="35px Arial";ctx.fillText("YOU WIN!",220,200);ctx.font="17px Arial";ctx.fillText("Refresh to play again",210,230)}
+ if(gameOver||won){ctx.fillStyle="#fff";ctx.font="35px Arial";ctx.fillText(gameOver?"GAME OVER":"YOU WIN!",210,200);ctx.font="17px Arial";ctx.fillText("Tap Restart Game",220,230)}
 }
 function update(){
- player.x+=joyX*3;player.y+=joyY*3;
+ if(!gameOver&&!won){
+  const now=Date.now();
+  enemies.forEach(m=>{
+   const dx=player.x-m.x,dy=player.y-m.y,d=Math.hypot(dx,dy)||1;
+   if(d>27){m.x+=dx/d*0.55;m.y+=dy/d*0.55}
+   else if(now-m.lastHit>1100&&now>invulnerableUntil){
+    player.h=Math.max(0,player.h-8);m.lastHit=now;invulnerableUntil=now+650;
+    if(player.h<=0)gameOver=true;
+   }
+  });
+ }
+ if(!gameOver&&!won){player.x+=joyX*3;player.y+=joyY*3;
  if(keys.arrowup||keys.w)player.y-=3;if(keys.arrowdown||keys.s)player.y+=3;
  if(keys.arrowleft||keys.a)player.x-=3;if(keys.arrowright||keys.d)player.x+=3;
  player.x=Math.max(20,Math.min(580,player.x));player.y=Math.max(50,Math.min(350,player.y));
+ }
  draw();requestAnimationFrame(update);
 }
 update();
