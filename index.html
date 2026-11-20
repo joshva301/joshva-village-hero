@@ -233,6 +233,12 @@ function drawFlower(x,y){
 }
 function draw(){
  ctx.clearRect(0,0,600,400);
+ // Camera zoom: draw the village and characters closer while keeping the canvas centered.
+ const zoom=1.22;
+ ctx.save();
+ ctx.translate(300,200);
+ ctx.scale(zoom,zoom);
+ ctx.translate(-300,-200);
  ctx.fillStyle="#579447";ctx.fillRect(0,0,600,400);
  for(let i=0;i<150;i++){const x=(i*73+19)%600,y=(i*47+31)%400;ctx.fillStyle=i%2?"#69a951":"#4c873e";ctx.fillRect(x,y,3,3);}
  ctx.fillStyle="#c9ad78";ctx.beginPath();ctx.moveTo(0,155);ctx.quadraticCurveTo(170,175,260,230);ctx.quadraticCurveTo(420,285,600,245);ctx.lineTo(600,300);ctx.quadraticCurveTo(400,330,230,260);ctx.quadraticCurveTo(100,205,0,205);ctx.closePath();ctx.fill();
@@ -245,6 +251,7 @@ function draw(){
  enemies.forEach(m=>drawEnemy(m));
  drawJoshva();
  if(attackFlash>0){ctx.font="27px Arial";ctx.fillText(weapon==="sword"?"⚔️":weapon==="bow"?"➶":"✨",player.x+18,player.y-5);attackFlash--}
+ ctx.restore();
  document.getElementById("score").innerText="Health: "+player.h+" | Enemies defeated: "+score+" | Weapon: "+weapon.toUpperCase();
  if(gameOver||won){ctx.fillStyle="#fff";ctx.font="35px Arial";ctx.fillText(gameOver?"GAME OVER":"YOU WIN!",210,200);ctx.font="17px Arial";ctx.fillText("Tap Restart Game",220,230)}
 }
@@ -263,7 +270,7 @@ function update(){
  if(!gameOver&&!won){player.x+=joyX*3;player.y+=joyY*3;
  if(keys.arrowup||keys.w)player.y-=3;if(keys.arrowdown||keys.s)player.y+=3;
  if(keys.arrowleft||keys.a)player.x-=3;if(keys.arrowright||keys.d)player.x+=3;
- player.x=Math.max(20,Math.min(580,player.x));player.y=Math.max(50,Math.min(350,player.y));
+ player.x=Math.max(55,Math.min(545,player.x));player.y=Math.max(70,Math.min(330,player.y));
  }
  draw();requestAnimationFrame(update);
 }
