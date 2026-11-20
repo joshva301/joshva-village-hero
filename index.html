@@ -92,6 +92,44 @@ function attack(){
  enemies=enemies.filter(m=>m.h>0);score=5-enemies.length;
  if(enemies.length===0)won=true;
 }
+function drawEnemy(m){
+ const bob=Math.sin((Date.now()/170)+m.x)*1.5;
+ ctx.save();ctx.translate(m.x,m.y+bob);
+ // shadow and small animated legs
+ ctx.fillStyle="rgba(0,0,0,.22)";ctx.beginPath();ctx.ellipse(0,14,14,5,0,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle="#4b3826";ctx.lineWidth=5;ctx.lineCap="round";
+ const leg=Math.sin(Date.now()/130+m.x)*3;
+ ctx.beginPath();ctx.moveTo(-5,5);ctx.lineTo(-7+leg,13);ctx.stroke();
+ ctx.beginPath();ctx.moveTo(5,5);ctx.lineTo(7-leg,13);ctx.stroke();
+ // monster body
+ ctx.fillStyle="#668b42";ctx.strokeStyle="#365b2c";ctx.lineWidth=2;
+ ctx.beginPath();ctx.roundRect(-11,-3,22,17,6);ctx.fill();ctx.stroke();
+ // arms
+ ctx.strokeStyle="#668b42";ctx.lineWidth=5;
+ ctx.beginPath();ctx.moveTo(-9,0);ctx.lineTo(-15,4+leg);ctx.stroke();
+ ctx.beginPath();ctx.moveTo(9,0);ctx.lineTo(15,4-leg);ctx.stroke();
+ // hands
+ ctx.fillStyle="#a1bb69";ctx.beginPath();ctx.arc(-15,4+leg,3,0,Math.PI*2);ctx.arc(15,4-leg,3,0,Math.PI*2);ctx.fill();
+ // head with varied face details
+ ctx.fillStyle="#83a955";ctx.strokeStyle="#365b2c";ctx.lineWidth=1.5;
+ ctx.beginPath();ctx.ellipse(0,-10,11,10,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+ // ears
+ ctx.beginPath();ctx.moveTo(-8,-15);ctx.lineTo(-14,-20);ctx.lineTo(-12,-10);ctx.closePath();ctx.fill();
+ ctx.beginPath();ctx.moveTo(8,-15);ctx.lineTo(14,-20);ctx.lineTo(12,-10);ctx.closePath();ctx.fill();
+ // small horns
+ ctx.fillStyle="#d4c68a";ctx.beginPath();ctx.moveTo(-5,-18);ctx.lineTo(-8,-25);ctx.lineTo(-1,-19);ctx.closePath();ctx.fill();
+ ctx.beginPath();ctx.moveTo(5,-18);ctx.lineTo(8,-25);ctx.lineTo(1,-19);ctx.closePath();ctx.fill();
+ // eyes and eyebrows
+ ctx.fillStyle="#fff";ctx.beginPath();ctx.ellipse(-4,-11,3,3.5,0,0,Math.PI*2);ctx.ellipse(4,-11,3,3.5,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#40251b";ctx.beginPath();ctx.arc(-4,-11,1.6,0,Math.PI*2);ctx.arc(4,-11,1.6,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle="#365b2c";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-7,-16);ctx.lineTo(-2,-15);ctx.moveTo(2,-15);ctx.lineTo(7,-16);ctx.stroke();
+ // nose and mouth
+ ctx.fillStyle="#526e35";ctx.beginPath();ctx.arc(0,-7,1.5,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle="#3e4f2b";ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-3,-4);ctx.quadraticCurveTo(0,-1,3,-4);ctx.stroke();
+ // health bar
+ ctx.fillStyle="#4b2020";ctx.fillRect(-15,-29,30,5);ctx.fillStyle="#77e36a";ctx.fillRect(-15,-29,30*(m.h/3),5);
+ ctx.restore();
+}
 function drawJoshva(){
  const moving=Math.abs(joyX)+Math.abs(joyY)>0.12||keys.arrowup||keys.arrowdown||keys.arrowleft||keys.arrowright||keys.w||keys.a||keys.s||keys.d;
  if(moving)walkPhase+=0.22;
@@ -204,12 +242,7 @@ function draw(){
  drawFence(115,284,5,14);drawFence(390,55,5,14);
  for(let i=0;i<26;i++)drawFlower((i*97+21)%600,(i*61+17)%400);
  for(let i=0;i<18;i++){ctx.fillStyle="#8c8b78";ctx.beginPath();ctx.ellipse((i*41+23)%600,(i*67+19)%400,3,2,0,0,Math.PI*2);ctx.fill();}
- enemies.forEach(m=>{
- ctx.font="30px Arial";ctx.fillText("👹",m.x-12,m.y+10);
- ctx.fillStyle="#5b1d1d";ctx.fillRect(m.x-15,m.y-22,30,5);
- ctx.fillStyle="#7ee36b";ctx.fillRect(m.x-15,m.y-22,30*(m.h/3),5);
- ctx.fillStyle="#397d38";
-});
+ enemies.forEach(m=>drawEnemy(m));
  drawJoshva();
  if(attackFlash>0){ctx.font="27px Arial";ctx.fillText(weapon==="sword"?"⚔️":weapon==="bow"?"➶":"✨",player.x+18,player.y-5);attackFlash--}
  document.getElementById("score").innerText="Health: "+player.h+" | Enemies defeated: "+score+" | Weapon: "+weapon.toUpperCase();
