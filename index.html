@@ -26,8 +26,23 @@ button.active{background:#b87922;border-color:#ffe29a}
 <p class="help">Move: WASD / Arrow keys • Attack: Space • Switch: 1 / 2</p>
 <div id="game"></div><div id="hud">Health: 100 • Enemies: 3 • Sword</div>
 <div id="controls"><div id="joystick"><div id="stick"></div></div><div id="buttons"><button id="weapon">🏹 BOW</button><button id="attack">⚔️ ATTACK</button></div></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+(function(){
+const host=document.getElementById('game');
+function show(msg){host.innerHTML='<div style="padding:24px;color:#fff;background:#263b2c;border-radius:12px;margin:16px;font:16px Arial;line-height:1.5"><b>Joshva Village Hero</b><br>'+msg+'</div>';}
+show('Loading 3D game…');
+const sources=[
+'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js',
+'https://unpkg.com/three@0.128.0/build/three.min.js'
+];
+function load(i){if(i>=sources.length){show('3D library could not load. Check your internet connection, then refresh the page.');return;}
+const s=document.createElement('script');s.src=sources[i];s.onload=()=>{if(window.THREE){start();}else load(i+1)};s.onerror=()=>load(i+1);document.head.appendChild(s);}
+function start(){
+try{
+if(!window.WebGLRenderingContext){show('This browser does not support WebGL. Try opening the game in Chrome.');return;}
+window.addEventListener('error',e=>{show('The game encountered an error. Refresh the page to try again.');});
+window.addEventListener('unhandledrejection',()=>show('The game encountered an error while loading. Refresh the page to try again.'));
 (()=> {
 const host=document.getElementById('game'),hud=document.getElementById('hud');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x9bd4f4);scene.fog=new THREE.Fog(0x9bd4f4,22,70);
@@ -136,6 +151,11 @@ let camOffset=new THREE.Vector3(0,6,9).applyAxisAngle(new THREE.Vector3(0,1,0),h
 hud.textContent='Health: '+health+' • Enemies: '+(enemies.filter(e=>e.visible).length)+' • '+weapon.toUpperCase()+(hud.dataset.notice?' • '+hud.dataset.notice:'');if(health<=0)hud.textContent='Game Over — Refresh to restart';if(defeated===3)hud.textContent='Village Clear! • Refresh to play again';
 renderer.render(scene,camera)}
 loop();
+})();
+ 
+}catch(err){show('The 3D game could not start. Refresh the page or try Chrome.');console.error(err);}
+}
+load(0);
 })();
 </script>
 </body>
