@@ -1,293 +1,80 @@
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Joshva Village Hero</title>
+<title>Joshva Village Hero — 3D</title>
 <style>
-*{box-sizing:border-box}body{margin:0;padding:16px 8px 28px;background:#172b20;color:#fff;text-align:center;font-family:Arial,sans-serif;touch-action:manipulation}
-h2{margin:8px 0}.help{margin:8px 0 12px}canvas{display:block;width:min(600px,96vw);height:auto;margin:0 auto;background:#70a94b;border:4px solid white;border-radius:6px;touch-action:none}
-#score{margin:12px 0}.weapons{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:10px auto;width:min(600px,96vw)}
-button{color:white;font-weight:bold;cursor:pointer}.weapon{border:2px solid #dcebd8;border-radius:10px;background:#315d3b;padding:10px 14px;font-size:15px}.weapon.selected{background:#b87922;border-color:#ffe29a;box-shadow:0 0 0 2px #ffe29a}
-#controls{width:min(600px,96vw);margin:12px auto;display:flex;align-items:center;justify-content:space-between;gap:15px;user-select:none;-webkit-user-select:none;touch-action:none}
-#joystick{width:140px;height:140px;flex:0 0 140px;border-radius:50%;background:#294b32;border:4px solid #b9d8b7;position:relative;touch-action:none}
-#stick{width:60px;height:60px;border-radius:50%;background:#82c879;border:3px solid white;position:absolute;left:36px;top:36px;pointer-events:none}
-#action-buttons{display:grid;grid-template-columns:repeat(2,75px);gap:10px}
-.control-btn{height:70px;border:2px solid white;border-radius:18px;background:#315d3b;color:white;font-weight:bold;font-size:15px;touch-action:none}
-#sword-btn{background:#a63d35}#bow-btn{background:#3874a8}
-.note{font-size:13px;opacity:.85;margin-top:10px}
-@media(min-width:700px){#controls{display:none}}
+*{box-sizing:border-box}body{margin:0;background:#172b20;color:#fff;font-family:Arial,sans-serif;text-align:center;overflow:hidden}
+h2{margin:8px 0;font-size:20px}.help{font-size:12px;margin:4px 0 8px}
+#game{width:100vw;height:calc(100vh - 112px);display:block;touch-action:none}
+#hud{position:absolute;top:48px;left:0;right:0;pointer-events:none;text-shadow:0 2px 3px #000;font-weight:bold}
+#controls{position:absolute;bottom:16px;left:0;right:0;display:flex;justify-content:space-between;align-items:end;padding:0 18px;pointer-events:none}
+#joystick{width:130px;height:130px;border-radius:50%;background:#294b32bb;border:3px solid #c8e5c5;position:relative;touch-action:none;pointer-events:auto}
+#stick{width:54px;height:54px;border-radius:50%;background:#82c879;border:3px solid white;position:absolute;left:35px;top:35px}
+#buttons{display:flex;gap:10px;pointer-events:auto}
+button{color:white;font-weight:bold;border:2px solid white;border-radius:16px;background:#315d3b;padding:12px 16px;font-size:14px;touch-action:none}
+button.active{background:#b87922;border-color:#ffe29a}
+#attack{background:#a63d35;min-width:74px}
+#weapon{background:#3874a8;min-width:74px}
+@media(min-width:700px){#controls{display:none}.help{font-size:14px}}
 </style>
 </head>
 <body>
-<h2>⚔️ Joshva Village Hero</h2>
-<p class="help">Move: Arrow Keys / WASD | Select weapon: 1, 2 | Attack: Space</p>
-<canvas id="game" width="600" height="400"></canvas>
-<div class="weapons" aria-label="Choose weapon">
-<button class="weapon selected" data-weapon="sword">⚔️ Sword (1)</button>
-<button class="weapon" data-weapon="bow">🏹 Bow (2)</button>
-
-</div>
-<h3 id="score">Health: 100 | Enemies defeated: 0</h3>
-<button id="restart" class="weapon">🔄 Restart Game</button>
-<div id="controls" aria-label="Touch game controls">
-<div id="joystick"><div id="stick"></div></div>
-<div id="action-buttons">
-<button class="control-btn" id="sword-btn">⚔️<br>SWORD</button>
-<button class="control-btn" id="bow-btn">🏹<br>BOW</button>
-
-</div>
-</div>
-<p class="note">Choose Sword or Bow, then attack. On computer use keys 1, 2 and Space.</p>
+<h2>⚔️ Joshva Village Hero — 3D</h2>
+<p class="help">Move: WASD / Arrow keys • Attack: Space • Switch: 1 / 2</p>
+<div id="game"></div><div id="hud">Health: 100 • Enemies: 3 • Sword</div>
+<div id="controls"><div id="joystick"><div id="stick"></div></div><div id="buttons"><button id="weapon">🏹 BOW</button><button id="attack">⚔️ ATTACK</button></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const c=document.getElementById("game"),ctx=c.getContext("2d");
-const player={x:300,y:200,h:100};
-let enemies=[],keys={},score=0,weapon="sword",attackFlash=0,gameOver=false,won=false,invulnerableUntil=0,walkPhase=0,faceX=1,faceY=0;
-function resetGame(){
- player.x=300;player.y=200;player.h=100;enemies=[];
- for(let i=0;i<5;i++)enemies.push({x:65+i*115,y:75+(i%2)*235,h:3,lastHit:0});
- score=0;gameOver=false;won=false;invulnerableUntil=0;keys={};
-}
-resetGame();
-document.getElementById("restart").addEventListener("click",resetGame);
-function chooseWeapon(name){
- weapon=name;
- document.querySelectorAll(".weapon").forEach(b=>b.classList.toggle("selected",b.dataset.weapon===name));
-}
-document.querySelectorAll(".weapon").forEach(b=>b.addEventListener("click",()=>chooseWeapon(b.dataset.weapon)));
-document.addEventListener("keydown",e=>{
- const k=e.key.toLowerCase();
- if(["arrowup","arrowdown","arrowleft","arrowright"," "].includes(k))e.preventDefault();
- keys[k===" "?"space":k]=true;
- if(!e.repeat&&e.key==="1")chooseWeapon("sword");
- if(!e.repeat&&e.key==="2")chooseWeapon("bow");
- 
- if(e.code==="Space"&&!e.repeat)attack();
-});
-document.addEventListener("keyup",e=>{const k=e.key.toLowerCase();keys[k===" "?"space":k]=false});
-const joystick=document.getElementById("joystick"),stick=document.getElementById("stick");
-let joyX=0,joyY=0,joystickActive=false;
-joystick.addEventListener("pointerdown",e=>{joystickActive=true;joystick.setPointerCapture(e.pointerId);moveStick(e)});
-joystick.addEventListener("pointermove",e=>{if(joystickActive)moveStick(e)});
-function moveStick(e){
- const r=joystick.getBoundingClientRect();let x=e.clientX-r.left-r.width/2,y=e.clientY-r.top-r.height/2;
- const max=40,d=Math.hypot(x,y);if(d>max){x=x/d*max;y=y/d*max}
- stick.style.left=(36+x)+"px";stick.style.top=(36+y)+"px";joyX=x/max;joyY=y/max;
-}
-function resetJoystick(){joystickActive=false;joyX=0;joyY=0;stick.style.left="36px";stick.style.top="36px"}
-joystick.addEventListener("pointerup",resetJoystick);joystick.addEventListener("pointercancel",resetJoystick);
-["sword","bow"].forEach(name=>document.getElementById(name+"-btn").addEventListener("pointerdown",e=>{e.preventDefault();chooseWeapon(name);attack()}));
-function attack(){
- if(gameOver||won||!enemies.length)return;
- attackFlash=12;
- const range=weapon==="sword"?68:230;
- const damage=weapon==="sword"?2:1;
- // Bow hits the nearest enemy in range; Sword affects nearby enemies.
- if(weapon==="bow"){
-  const target=enemies.filter(m=>Math.hypot(m.x-player.x,m.y-player.y)<range).sort((a,b)=>Math.hypot(a.x-player.x,a.y-player.y)-Math.hypot(b.x-player.x,b.y-player.y))[0];
-  if(target)target.h-=damage;
- }else{
-  enemies.forEach(m=>{if(Math.hypot(m.x-player.x,m.y-player.y)<range)m.h-=damage});
- }
- enemies=enemies.filter(m=>m.h>0);score=5-enemies.length;
- if(enemies.length===0)won=true;
-}
-function drawEnemy(m){
- const bob=Math.sin((Date.now()/170)+m.x)*1.5;
- ctx.save();ctx.translate(m.x,m.y+bob);
- // shadow and small animated legs
- ctx.fillStyle="rgba(0,0,0,.22)";ctx.beginPath();ctx.ellipse(0,14,14,5,0,0,Math.PI*2);ctx.fill();
- ctx.strokeStyle="#4b3826";ctx.lineWidth=5;ctx.lineCap="round";
- const leg=Math.sin(Date.now()/130+m.x)*3;
- ctx.beginPath();ctx.moveTo(-5,5);ctx.lineTo(-7+leg,13);ctx.stroke();
- ctx.beginPath();ctx.moveTo(5,5);ctx.lineTo(7-leg,13);ctx.stroke();
- // monster body
- ctx.fillStyle="#668b42";ctx.strokeStyle="#365b2c";ctx.lineWidth=2;
- ctx.beginPath();ctx.roundRect(-11,-3,22,17,6);ctx.fill();ctx.stroke();
- // arms
- ctx.strokeStyle="#668b42";ctx.lineWidth=5;
- ctx.beginPath();ctx.moveTo(-9,0);ctx.lineTo(-15,4+leg);ctx.stroke();
- ctx.beginPath();ctx.moveTo(9,0);ctx.lineTo(15,4-leg);ctx.stroke();
- // hands
- ctx.fillStyle="#a1bb69";ctx.beginPath();ctx.arc(-15,4+leg,3,0,Math.PI*2);ctx.arc(15,4-leg,3,0,Math.PI*2);ctx.fill();
- // head with varied face details
- ctx.fillStyle="#83a955";ctx.strokeStyle="#365b2c";ctx.lineWidth=1.5;
- ctx.beginPath();ctx.ellipse(0,-10,11,10,0,0,Math.PI*2);ctx.fill();ctx.stroke();
- // ears
- ctx.beginPath();ctx.moveTo(-8,-15);ctx.lineTo(-14,-20);ctx.lineTo(-12,-10);ctx.closePath();ctx.fill();
- ctx.beginPath();ctx.moveTo(8,-15);ctx.lineTo(14,-20);ctx.lineTo(12,-10);ctx.closePath();ctx.fill();
- // small horns
- ctx.fillStyle="#d4c68a";ctx.beginPath();ctx.moveTo(-5,-18);ctx.lineTo(-8,-25);ctx.lineTo(-1,-19);ctx.closePath();ctx.fill();
- ctx.beginPath();ctx.moveTo(5,-18);ctx.lineTo(8,-25);ctx.lineTo(1,-19);ctx.closePath();ctx.fill();
- // eyes and eyebrows
- ctx.fillStyle="#fff";ctx.beginPath();ctx.ellipse(-4,-11,3,3.5,0,0,Math.PI*2);ctx.ellipse(4,-11,3,3.5,0,0,Math.PI*2);ctx.fill();
- ctx.fillStyle="#40251b";ctx.beginPath();ctx.arc(-4,-11,1.6,0,Math.PI*2);ctx.arc(4,-11,1.6,0,Math.PI*2);ctx.fill();
- ctx.strokeStyle="#365b2c";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-7,-16);ctx.lineTo(-2,-15);ctx.moveTo(2,-15);ctx.lineTo(7,-16);ctx.stroke();
- // nose and mouth
- ctx.fillStyle="#526e35";ctx.beginPath();ctx.arc(0,-7,1.5,0,Math.PI*2);ctx.fill();
- ctx.strokeStyle="#3e4f2b";ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-3,-4);ctx.quadraticCurveTo(0,-1,3,-4);ctx.stroke();
- // health bar
- ctx.fillStyle="#4b2020";ctx.fillRect(-15,-29,30,5);ctx.fillStyle="#77e36a";ctx.fillRect(-15,-29,30*(m.h/3),5);
- ctx.restore();
-}
-function drawJoshva(){
- const moving=Math.abs(joyX)+Math.abs(joyY)>0.12||keys.arrowup||keys.arrowdown||keys.arrowleft||keys.arrowright||keys.w||keys.a||keys.s||keys.d;
- if(moving)walkPhase+=0.22;
- const swing=moving?Math.sin(walkPhase)*8:0;
- ctx.save();ctx.translate(player.x,player.y);
- // Ground shadow
- ctx.fillStyle="rgba(0,0,0,.25)";ctx.beginPath();ctx.ellipse(0,18,18,6,0,0,Math.PI*2);ctx.fill();
- // Boots and animated armored legs
- ctx.lineCap="round";
- ctx.strokeStyle="#34435d";ctx.lineWidth=8;
- ctx.beginPath();ctx.moveTo(-5,5);ctx.lineTo(-7+swing,16);ctx.lineTo(-8+swing,24);ctx.stroke();
- ctx.beginPath();ctx.moveTo(5,5);ctx.lineTo(7-swing,16);ctx.lineTo(8-swing,24);ctx.stroke();
- ctx.strokeStyle="#b8c5d3";ctx.lineWidth=5;
- ctx.beginPath();ctx.moveTo(-7+swing,13);ctx.lineTo(-8+swing,19);ctx.stroke();
- ctx.beginPath();ctx.moveTo(7-swing,13);ctx.lineTo(8-swing,19);ctx.stroke();
- ctx.fillStyle="#292e3b";ctx.beginPath();ctx.roundRect(-14+swing,21,13,7,3);ctx.roundRect(1-swing,21,13,7,3);ctx.fill();
- ctx.fillStyle="#b6c3d0";ctx.fillRect(-11+swing,22,6,2);ctx.fillRect(4-swing,22,6,2);
- // Blue tunic under chest armor
- ctx.fillStyle="#276c9f";ctx.strokeStyle="#173c58";ctx.lineWidth=2;
- ctx.beginPath();ctx.roundRect(-11,-7,22,17,5);ctx.fill();ctx.stroke();
- // Chest plate with highlighted edge
- ctx.fillStyle="#c2ccd5";ctx.strokeStyle="#667789";ctx.lineWidth=2;
- ctx.beginPath();ctx.moveTo(-9,-6);ctx.lineTo(-6,-10);ctx.lineTo(6,-10);ctx.lineTo(9,-6);ctx.lineTo(7,5);ctx.lineTo(0,9);ctx.lineTo(-7,5);ctx.closePath();ctx.fill();ctx.stroke();
- ctx.fillStyle="#e3ebf2";ctx.beginPath();ctx.moveTo(-5,-7);ctx.lineTo(0,-8);ctx.lineTo(5,-7);ctx.lineTo(3,1);ctx.lineTo(0,4);ctx.lineTo(-3,1);ctx.closePath();ctx.fill();
- // Belt and golden clasp
- ctx.fillStyle="#5d3826";ctx.fillRect(-10,5,20,4);ctx.fillStyle="#e4b84f";ctx.fillRect(-2,4,4,5);
- // Shoulder armor
- ctx.fillStyle="#8e9eae";ctx.strokeStyle="#526678";ctx.lineWidth=1.5;
- ctx.beginPath();ctx.arc(-11,-5,6,Math.PI*.7,Math.PI*1.9);ctx.fill();ctx.stroke();
- ctx.beginPath();ctx.arc(11,-5,6,Math.PI*1.1,Math.PI*2.3);ctx.fill();ctx.stroke();
- // Arms: extended to distinct hand positions when dual swords are equipped.
- const dualSword=weapon==="sword";
- const attackPose=attackFlash>0?Math.sin((12-attackFlash)/12*Math.PI)*12:0;
- const leftHandX=dualSword?-22:-17, rightHandX=dualSword?22:17;
- const leftHandY=dualSword?4+swing*.35:7+swing*.6, rightHandY=dualSword?4-swing*.35:7-swing*.6;
- ctx.strokeStyle="#d6a879";ctx.lineWidth=5;ctx.lineCap="round";
- ctx.beginPath();ctx.moveTo(-9,-3);ctx.lineTo(-15,-1+swing*.35);ctx.lineTo(leftHandX,leftHandY);ctx.stroke();
- ctx.beginPath();ctx.moveTo(9,-3);ctx.lineTo(15,-1-swing*.35);ctx.lineTo(rightHandX,rightHandY);ctx.stroke();
- ctx.fillStyle="#aebbc8";ctx.strokeStyle="#667789";ctx.lineWidth=1;
- ctx.beginPath();ctx.roundRect(leftHandX-3,leftHandY-3,7,7,2);ctx.fill();ctx.stroke();
- ctx.beginPath();ctx.roundRect(rightHandX-3,rightHandY-3,7,7,2);ctx.fill();ctx.stroke();
- // Head and hair
- ctx.fillStyle="#f0bd8b";ctx.strokeStyle="#7c4b2c";ctx.lineWidth=1.5;
- ctx.beginPath();ctx.arc(0,-15,9,0,Math.PI*2);ctx.fill();ctx.stroke();
- ctx.fillStyle="#3b2418";ctx.beginPath();ctx.arc(0,-19,9,Math.PI,Math.PI*2);ctx.fill();ctx.fillRect(-8,-19,16,4);
- // Small helmet brow / adventurer headband
- ctx.fillStyle="#c4ced7";ctx.fillRect(-8,-18,16,3);ctx.fillStyle="#e4bd55";ctx.fillRect(-2,-18,4,3);
- ctx.fillStyle="#202020";ctx.beginPath();ctx.arc(-3,-14,1.2,0,Math.PI*2);ctx.arc(3,-14,1.2,0,Math.PI*2);ctx.fill();
- // Weapons are attached directly to each hand. Attack animation swings both swords together.
- if(weapon==="sword"){
-  const leftAngle=0.72+Math.sin(walkPhase)*0.10-attackPose*0.045;
-  const rightAngle=-0.72-Math.sin(walkPhase)*0.10+attackPose*0.045;
-  function drawHandSword(x,y,angle){
-   ctx.save();ctx.translate(x,y);ctx.rotate(angle);
-   ctx.strokeStyle="#57391f";ctx.lineWidth=5;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(0,1);ctx.lineTo(0,9);ctx.stroke();
-   ctx.strokeStyle="#d6b56c";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-5,1);ctx.lineTo(5,1);ctx.stroke();
-   ctx.fillStyle="#dbe7ef";ctx.strokeStyle="#718393";ctx.lineWidth=1;
-   ctx.beginPath();ctx.moveTo(-2,-1);ctx.lineTo(-3,-17);ctx.lineTo(0,-28);ctx.lineTo(3,-17);ctx.lineTo(2,-1);ctx.closePath();ctx.fill();ctx.stroke();
-   ctx.strokeStyle="#ffffff";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,-5);ctx.lineTo(0,-23);ctx.stroke();
-   ctx.restore();
-  }
-  drawHandSword(leftHandX,leftHandY,leftAngle);
-  drawHandSword(rightHandX,rightHandY,rightAngle);
- }else if(weapon==="bow"){
-  ctx.strokeStyle="#9a6635";ctx.lineWidth=3;ctx.beginPath();ctx.arc(23,2,13,-1.2,1.2);ctx.stroke();
-  ctx.strokeStyle="#e5e5e5";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(14,-10);ctx.lineTo(14,14);ctx.stroke();
- }
- // Name and temporary shield aura
- ctx.fillStyle="#fff";ctx.font="bold 12px Arial";ctx.textAlign="center";ctx.fillText("Joshva",0,-31);
- if(Date.now()<invulnerableUntil){ctx.strokeStyle="#8eeaff";ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,28,0,Math.PI*2);ctx.stroke();}
- if(attackFlash>0){ctx.font="22px Arial";ctx.fillText(weapon==="sword"?"⚔️":"🏹",26,-8);}
- ctx.restore();
-}
-function drawHouse(x,y,w,h){
- // Warm village cottage with layered roof, plaster, timber and windows
- ctx.fillStyle="rgba(0,0,0,.16)";ctx.beginPath();ctx.ellipse(x+w/2,y+h+5,w*.62,8,0,0,Math.PI*2);ctx.fill();
- ctx.fillStyle="#d5b17c";ctx.fillRect(x,y+18,w,h-18);
- ctx.fillStyle="#a66d45";ctx.fillRect(x+4,y+22,w-8,h-25);
- ctx.fillStyle="#d8b987";ctx.fillRect(x+7,y+25,w-14,h-29);
- ctx.fillStyle="#8b4934";ctx.beginPath();ctx.moveTo(x-10,y+21);ctx.lineTo(x+w/2,y-10);ctx.lineTo(x+w+10,y+21);ctx.closePath();ctx.fill();
- ctx.fillStyle="#b96542";ctx.beginPath();ctx.moveTo(x-4,y+20);ctx.lineTo(x+w/2,y-5);ctx.lineTo(x+w+4,y+20);ctx.closePath();ctx.fill();
- ctx.strokeStyle="#77432e";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x-7,y+22);ctx.lineTo(x+w/2,y-8);ctx.lineTo(x+w+7,y+22);ctx.stroke();
- for(const wx of [x+10,x+w-27]){
-  ctx.fillStyle="#754a32";ctx.fillRect(wx-2,y+29,21,23);ctx.fillStyle="#8ed1dc";ctx.fillRect(wx,y+31,17,19);
-  ctx.strokeStyle="#754a32";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(wx+8,y+31);ctx.lineTo(wx+8,y+50);ctx.moveTo(wx,y+40);ctx.lineTo(wx+17,y+40);ctx.stroke();
- }
- ctx.fillStyle="#62422c";ctx.fillRect(x+w/2-10,y+h-26,20,26);ctx.fillStyle="#8b6543";ctx.fillRect(x+w/2-7,y+h-23,14,23);
- ctx.fillStyle="#d4a35f";ctx.beginPath();ctx.arc(x+w/2+5,y+h-14,1.8,0,Math.PI*2);ctx.fill();
- ctx.fillStyle="#6d4a32";ctx.fillRect(x+4,y+h-5,w-8,5);
-}
-function drawTree(x,y){
- ctx.fillStyle="rgba(0,0,0,.17)";ctx.beginPath();ctx.ellipse(x+3,y+31,24,7,0,0,Math.PI*2);ctx.fill();
- ctx.fillStyle="#704625";ctx.fillRect(x-6,y+7,12,27);ctx.fillStyle="#8d6035";ctx.fillRect(x-3,y+9,3,23);
- ctx.fillStyle="#28623a";ctx.beginPath();ctx.arc(x,y-1,23,0,Math.PI*2);ctx.fill();
- ctx.fillStyle="#347b40";ctx.beginPath();ctx.arc(x-13,y-8,16,0,Math.PI*2);ctx.arc(x+13,y-7,16,0,Math.PI*2);ctx.arc(x,y-18,16,0,Math.PI*2);ctx.fill();
- ctx.fillStyle="#62a94f";ctx.beginPath();ctx.arc(x-7,y-18,7,0,Math.PI*2);ctx.arc(x+10,y-12,6,0,Math.PI*2);ctx.arc(x-16,y-5,5,0,Math.PI*2);ctx.fill();
-}
-function drawBush(x,y){
- ctx.fillStyle="#28633b";ctx.beginPath();ctx.arc(x-8,y,11,0,Math.PI*2);ctx.arc(x+4,y-5,13,0,Math.PI*2);ctx.arc(x+14,y+2,9,0,Math.PI*2);ctx.fill();
- ctx.fillStyle="#5da84e";ctx.beginPath();ctx.arc(x-6,y-5,4,0,Math.PI*2);ctx.arc(x+8,y-8,4,0,Math.PI*2);ctx.fill();
-}
-function drawFence(x,y,count,step){
- ctx.strokeStyle="#79552f";ctx.lineWidth=4;
- for(let i=0;i<count;i++){ctx.fillStyle="#9a7041";ctx.fillRect(x+i*step,y-8,4,23)}
- ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+(count-1)*step,y);ctx.moveTo(x,y+9);ctx.lineTo(x+(count-1)*step,y+9);ctx.stroke();
-}
-function drawFlower(x,y){
- ctx.fillStyle="#e8d5a0";ctx.beginPath();ctx.arc(x,y,2,0,Math.PI*2);ctx.fill();
- ctx.fillStyle="#d96f91";for(let a=0;a<Math.PI*2;a+=Math.PI/2){ctx.beginPath();ctx.arc(x+Math.cos(a)*3,y+Math.sin(a)*3,2,0,Math.PI*2);ctx.fill();}
-}
-function draw(){
- ctx.clearRect(0,0,600,400);
- // Camera zoom: draw the village and characters closer while keeping the canvas centered.
- const zoom=1.22;
- ctx.save();
- ctx.translate(300,200);
- ctx.scale(zoom,zoom);
- ctx.translate(-300,-200);
- ctx.fillStyle="#579447";ctx.fillRect(0,0,600,400);
- for(let i=0;i<150;i++){const x=(i*73+19)%600,y=(i*47+31)%400;ctx.fillStyle=i%2?"#69a951":"#4c873e";ctx.fillRect(x,y,3,3);}
- ctx.fillStyle="#c9ad78";ctx.beginPath();ctx.moveTo(0,155);ctx.quadraticCurveTo(170,175,260,230);ctx.quadraticCurveTo(420,285,600,245);ctx.lineTo(600,300);ctx.quadraticCurveTo(400,330,230,260);ctx.quadraticCurveTo(100,205,0,205);ctx.closePath();ctx.fill();
- drawHouse(34,55,78,65);drawHouse(485,55,78,65);drawHouse(475,300,76,62);
- drawTree(160,70);drawTree(430,115);drawTree(100,310);drawTree(535,215);drawTree(355,330);
- drawBush(205,105);drawBush(285,330);drawBush(445,285);drawBush(70,235);drawBush(565,85);
- drawFence(115,284,5,14);drawFence(390,55,5,14);
- for(let i=0;i<26;i++)drawFlower((i*97+21)%600,(i*61+17)%400);
- for(let i=0;i<18;i++){ctx.fillStyle="#8c8b78";ctx.beginPath();ctx.ellipse((i*41+23)%600,(i*67+19)%400,3,2,0,0,Math.PI*2);ctx.fill();}
- enemies.forEach(m=>drawEnemy(m));
- drawJoshva();
- if(attackFlash>0){ctx.font="27px Arial";ctx.fillText(weapon==="sword"?"⚔️":"➶",player.x+18,player.y-5);attackFlash--}
- ctx.restore();
- document.getElementById("score").innerText="Health: "+player.h+" | Enemies defeated: "+score+" | Weapon: "+weapon.toUpperCase();
- if(gameOver||won){ctx.fillStyle="#fff";ctx.font="35px Arial";ctx.fillText(gameOver?"GAME OVER":"YOU WIN!",210,200);ctx.font="17px Arial";ctx.fillText("Tap Restart Game",220,230)}
-}
-function update(){
- if(!gameOver&&!won){
-  const now=Date.now();
-  // Only one enemy is allowed to attack at a time; others wait nearby.
-  const attacker=enemies.find(m=>Math.hypot(player.x-m.x,player.y-m.y)<110) || enemies[0];
-  enemies.forEach(m=>{
-   const dx=player.x-m.x,dy=player.y-m.y,d=Math.hypot(dx,dy)||1;
-   if(m===attacker){
-    if(d>27){m.x+=dx/d*0.55;m.y+=dy/d*0.55}
-    else if(now-m.lastHit>1100&&now>invulnerableUntil){
-     player.h=Math.max(0,player.h-8);m.lastHit=now;invulnerableUntil=now+650;
-     if(player.h<=0)gameOver=true;
-    }
-   }else if(d>70){m.x+=dx/d*0.25;m.y+=dy/d*0.25;}
-  });
- }
- if(!gameOver&&!won){player.x+=joyX*3;player.y+=joyY*3;
- if(keys.arrowup||keys.w)player.y-=3;if(keys.arrowdown||keys.s)player.y+=3;
- if(keys.arrowleft||keys.a)player.x-=3;if(keys.arrowright||keys.d)player.x+=3;
- player.x=Math.max(55,Math.min(545,player.x));player.y=Math.max(70,Math.min(330,player.y));
- }
- draw();requestAnimationFrame(update);
-}
-update();
+(()=> {
+const host=document.getElementById('game'),hud=document.getElementById('hud');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x9bd4f4);scene.fog=new THREE.Fog(0x9bd4f4,22,70);
+const camera=new THREE.PerspectiveCamera(58,1,.1,120);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputEncoding=THREE.sRGBEncoding;host.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xe4f4ff,0x55703b,1.5));
+const sun=new THREE.DirectionalLight(0xfff1d6,2.1);sun.position.set(-12,22,8);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
+const mat=(color,rough=1)=>new THREE.MeshStandardMaterial({color,roughness:rough});
+const grass=mat(0x64a84e),pathmat=mat(0xc6aa78),wood=mat(0x81532f),roof=mat(0x9a4936),plaster=mat(0xe1c797),leaf=mat(0x2e783d),leaf2=mat(0x4b9948),stone=mat(0x87917d);
+function box(x,y,z,sx,sy,sz,m){const o=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
+function sphere(x,y,z,r,m){const o=new THREE.Mesh(new THREE.SphereGeometry(r,10,8),m);o.position.set(x,y,z);o.castShadow=true;scene.add(o);return o}
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(100,100),grass);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+const path=new THREE.Mesh(new THREE.PlaneGeometry(5,65),pathmat);path.rotation.x=-Math.PI/2;path.position.set(0,.012,0);scene.add(path);
+for(let i=0;i<80;i++){let x=(Math.random()-0.5)*46,z=(Math.random()-0.5)*50;if(Math.abs(x)<3)continue;let peb=new THREE.Mesh(new THREE.SphereGeometry(.08+Math.random()*.13,6,5),stone);peb.position.set(x,.06,z);peb.scale.y=.4;scene.add(peb)}
+function tree(x,z){box(x,.8,z,.35,1.6,.35,wood);for(let k=0;k<3;k++){let t=new THREE.Mesh(new THREE.ConeGeometry(1.15-k*.18,1.7,7),k===1?leaf2:leaf);t.position.set(x,1.6+k*.65,z);t.castShadow=true;scene.add(t)}}
+function house(x,z){box(x,1.2,z,4,2.4,3.4,plaster);let r=new THREE.Mesh(new THREE.ConeGeometry(3.1,1.6,4),roof);r.rotation.y=Math.PI/4;r.position.set(x,2.7,z);r.castShadow=true;scene.add(r);box(x,0.9,z+1.73,.85,1.8,.12,wood);box(x-1.15,1.45,z+1.76,.7,.65,.12,mat(0x8bc4d4));box(x+1.15,1.45,z+1.76,.7,.65,.12,mat(0x8bc4d4))}
+house(-10,-9);house(10,-13);house(-12,12);house(12,13);
+for(const p of [[-18,-18],[-16,3],[-19,16],[18,-5],[17,18],[8,22],[-7,24],[23,7],[6,-24],[-23,-5]])tree(...p);
+for(let i=0;i<12;i++){box(-5+i*.9,.45,8,.12,.9,.12,wood);box(-5+i*.9,.45,10,.12,.9,.12,wood)}box(0,.8,9,11,.12,.12,wood);
+const hero=new THREE.Group();scene.add(hero);
+const armor=mat(0x536e91),silver=mat(0xbecbd7),skin=mat(0xe3b486),dark=mat(0x293647),gold=mat(0xd9b04c);
+function part(parent,g,m,x,y,z){let o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;parent.add(o);return o}
+part(hero,new THREE.BoxGeometry(.65,.85,.38),armor,0,1.15,0);part(hero,new THREE.BoxGeometry(.55,.45,.4),silver,0,1.3,.04);part(hero,new THREE.SphereGeometry(.27,12,10),skin,0,1.85,0);part(hero,new THREE.SphereGeometry(.28,10,8),dark,0,2.03,-.04);
+part(hero,new THREE.BoxGeometry(.48,.08,.45),gold,0,1.72,0);
+const limbs=[];
+for(let side of [-1,1]){let arm=part(hero,new THREE.BoxGeometry(.18,.55,.18),skin,side*.46,1.15,0);arm.rotation.z=side*.2;limbs.push(arm);part(hero,new THREE.BoxGeometry(.2,.48,.2),dark,side*.22,.4,0)}
+const swordGrp=new THREE.Group();hero.add(swordGrp);part(swordGrp,new THREE.BoxGeometry(.08,.55,.09),wood,0,-.18,0);part(swordGrp,new THREE.BoxGeometry(.08,.7,.06),silver,0,.35,0);part(swordGrp,new THREE.BoxGeometry(.36,.08,.1),gold,0,-.02,0);swordGrp.position.set(.55,1.2,.22);
+const bowGrp=new THREE.Group();hero.add(bowGrp);let bow=part(bowGrp,new THREE.TorusGeometry(.42,.035,8,18,Math.PI),wood,0,0,0);bow.rotation.z=Math.PI/2;let string=part(bowGrp,new THREE.CylinderGeometry(.015,.015,.78,5),silver,0,0,0);string.rotation.z=Math.PI/2;bowGrp.position.set(.56,1.15,.2);bowGrp.visible=false;
+const enemies=[];function enemy(x,z){let g=new THREE.Group();scene.add(g);part(g,new THREE.SphereGeometry(.32,10,8),mat(0x7e9f52),0,1.45,0);part(g,new THREE.BoxGeometry(.55,.65,.4),mat(0x55763b),0,.85,0);for(let s of [-1,1]){part(g,new THREE.BoxGeometry(.15,.45,.15),mat(0x4b5b32),s*.2,.35,0);part(g,new THREE.BoxGeometry(.12,.45,.12),mat(0x7e9f52),s*.4,.9,0)}g.position.set(x,0,z);g.userData.hp=3;g.userData.cool=0;enemies.push(g)}enemy(-8,2);enemy(9,2);enemy(0,-17);
+let weapon='sword',joyX=0,joyY=0,joyActive=false,keys={},attackCooldown=0,hitFlash=0,health=100,defeated=0,walk=0;
+function selectWeapon(){weapon=weapon==='sword'?'bow':'sword';swordGrp.visible=weapon==='sword';bowGrp.visible=weapon==='bow';document.getElementById('weapon').textContent=weapon==='sword'?'🏹 BOW':'⚔️ SWORD'}
+document.getElementById('weapon').onclick=selectWeapon;
+function attack(){if(attackCooldown>0)return;attackCooldown=.45;hero.userData.attack=.25;if(weapon==='sword'){enemies.forEach(e=>{if(e.visible&&e.position.distanceTo(hero.position)<2.2){e.userData.hp--;if(e.userData.hp<=0){e.visible=false;defeated++}}})}else{let target=enemies.find(e=>e.visible&&e.position.distanceTo(hero.position)<13);if(target){target.userData.hp--;if(target.userData.hp<=0){target.visible=false;defeated++}}}}
+document.getElementById('attack').onclick=attack;window.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.code==='Space'){e.preventDefault();attack()}if(e.key==='1'&&weapon!=='sword')selectWeapon();if(e.key==='2'&&weapon!=='bow')selectWeapon()});window.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+const joy=document.getElementById('joystick'),stick=document.getElementById('stick');function setJoy(e){const r=joy.getBoundingClientRect();let x=e.clientX-r.left-r.width/2,y=e.clientY-r.top-r.height/2;let d=Math.hypot(x,y),max=38;if(d>max){x=x/d*max;y=y/d*max}joyX=x/max;joyY=y/max;stick.style.left=35+x+'px';stick.style.top=35+y+'px'}joy.addEventListener('pointerdown',e=>{joyActive=true;joy.setPointerCapture(e.pointerId);setJoy(e)});joy.addEventListener('pointermove',e=>{if(joyActive)setJoy(e)});function resetJoy(){joyActive=false;joyX=joyY=0;stick.style.left='35px';stick.style.top='35px'}joy.addEventListener('pointerup',resetJoy);joy.addEventListener('pointercancel',resetJoy);
+function resize(){let w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix()}window.addEventListener('resize',resize);resize();
+const clock=new THREE.Clock();
+function loop(){requestAnimationFrame(loop);let dt=Math.min(clock.getDelta(),.05);attackCooldown=Math.max(0,attackCooldown-dt);
+let mx=joyX+(keys.a||keys.arrowleft?-1:0)+(keys.d||keys.arrowright?1:0),mz=joyY+(keys.w||keys.arrowup?-1:0)+(keys.s||keys.arrowdown?1:0);let len=Math.hypot(mx,mz);if(len>1){mx/=len;mz/=len}
+if(len>.08){hero.position.x+=mx*5*dt;hero.position.z+=mz*5*dt;hero.rotation.y=Math.atan2(mx,mz);walk+=dt*10;hero.position.y=Math.abs(Math.sin(walk))*.08;limbs.forEach((a,i)=>a.rotation.x=Math.sin(walk+(i*Math.PI))*0.45)}
+hero.position.x=Math.max(-25,Math.min(25,hero.position.x));hero.position.z=Math.max(-25,Math.min(25,hero.position.z));
+enemies.forEach(e=>{if(!e.visible)return;let dx=hero.position.x-e.position.x,dz=hero.position.z-e.position.z,d=Math.hypot(dx,dz);if(d>2.1){e.position.x+=dx/d*1.1*dt;e.position.z+=dz/d*1.1*dt;e.rotation.y=Math.atan2(dx,dz)}else{e.userData.cool-=dt;if(e.userData.cool<=0){health=Math.max(0,health-5);e.userData.cool=1.2}}});
+let camOffset=new THREE.Vector3(0,6,9).applyAxisAngle(new THREE.Vector3(0,1,0),hero.rotation.y);camera.position.lerp(new THREE.Vector3(hero.position.x+camOffset.x,hero.position.y+camOffset.y,hero.position.z+camOffset.z),.09);camera.lookAt(hero.position.x,hero.position.y+1,hero.position.z);
+hud.textContent='Health: '+health+' • Enemies: '+(enemies.filter(e=>e.visible).length)+' • '+weapon.toUpperCase();if(health<=0)hud.textContent='Game Over — Refresh to restart';if(defeated===3)hud.textContent='Village Clear! • Refresh to play again';
+renderer.render(scene,camera)}
+loop();
+})();
 </script>
 </body>
 </html>
