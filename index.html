@@ -258,13 +258,17 @@ function draw(){
 function update(){
  if(!gameOver&&!won){
   const now=Date.now();
+  // Only one enemy is allowed to attack at a time; others wait nearby.
+  const attacker=enemies.find(m=>Math.hypot(player.x-m.x,player.y-m.y)<110) || enemies[0];
   enemies.forEach(m=>{
    const dx=player.x-m.x,dy=player.y-m.y,d=Math.hypot(dx,dy)||1;
-   if(d>27){m.x+=dx/d*0.55;m.y+=dy/d*0.55}
-   else if(now-m.lastHit>1100&&now>invulnerableUntil){
-    player.h=Math.max(0,player.h-8);m.lastHit=now;invulnerableUntil=now+650;
-    if(player.h<=0)gameOver=true;
-   }
+   if(m===attacker){
+    if(d>27){m.x+=dx/d*0.55;m.y+=dy/d*0.55}
+    else if(now-m.lastHit>1100&&now>invulnerableUntil){
+     player.h=Math.max(0,player.h-8);m.lastHit=now;invulnerableUntil=now+650;
+     if(player.h<=0)gameOver=true;
+    }
+   }else if(d>70){m.x+=dx/d*0.25;m.y+=dy/d*0.25;}
   });
  }
  if(!gameOver&&!won){player.x+=joyX*3;player.y+=joyY*3;
