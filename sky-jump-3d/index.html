@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Sky Jump Adventure 3D</title>
+<style>
+*{box-sizing:border-box}body{margin:0;overflow:hidden;background:#87ceeb;font-family:system-ui,Arial;color:#fff;touch-action:none}
+#hud{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:flex-start;z-index:3;pointer-events:none}
+.panel{background:#14283caa;border:1px solid #ffffff44;border-radius:14px;padding:9px 13px;backdrop-filter:blur(6px);font-weight:700;text-shadow:0 1px 3px #000}
+#message{position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);text-align:center;background:#14283ce8;border-radius:20px;padding:22px 28px;z-index:5;max-width:90%;display:none}
+#message button{font-size:17px;border:0;border-radius:12px;padding:12px 22px;background:#ffcf36;color:#17263a;font-weight:800;margin-top:12px}
+#controls{position:fixed;bottom:20px;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-end;padding:0 20px;z-index:4}
+#stick{width:132px;height:132px;border-radius:50%;background:#ffffff30;border:2px solid #ffffff70;position:relative;touch-action:none}
+#knob{position:absolute;width:58px;height:58px;border-radius:50%;left:35px;top:35px;background:#ffffffa8;border:2px solid #fff;box-shadow:0 3px 12px #0003}
+#buttons{display:flex;gap:12px;align-items:flex-end}
+.action{width:76px;height:76px;border-radius:50%;border:2px solid #fff8;background:#ffcf36dd;color:#17263a;font-weight:900;font-size:16px;box-shadow:0 4px 12px #0003;touch-action:none}
+#jump{width:88px;height:88px;background:#52e0a4e0}
+#hint{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);font-size:12px;color:#fff;text-shadow:0 1px 4px #000;z-index:2;white-space:nowrap}
+@media(min-width:800px){#stick{display:none}#controls{justify-content:flex-end}#hint{bottom:12px}}
+</style>
+</head>
+<body>
+<div id="hud"><div class="panel">🏆 <span id="score">0</span> &nbsp;⭐ <span id="coins">0</span></div><div class="panel">SKY JUMP 3D</div></div>
+<div id="message"><h2 id="msgTitle">You fell!</h2><p id="msgText">Try again and reach higher platforms.</p><button id="restart">PLAY AGAIN</button></div>
+<div id="controls"><div id="stick"><div id="knob"></div></div><div id="buttons"><button class="action" id="jump">JUMP</button></div></div>
+<div id="hint">Move: joystick / WASD or arrows • Jump: Space</div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x8bd5ff);scene.fog=new THREE.Fog(0x8bd5ff,35,100);
+const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,150);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;document.body.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xffffff,0x5b7953,2));
+const sun=new THREE.DirectionalLight(0xffffff,2.4);sun.position.set(-8,18,10);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
+const mat=(color,rough=.75)=>new THREE.MeshStandardMaterial({color,roughness:rough});
+const grass=mat(0x42b96d),topGrass=mat(0x69df86),rock=mat(0x687b8b),wood=mat(0x9d6a37),gold=new THREE.MeshStandardMaterial({color:0xffd42a,metalness:.7,roughness:.22});
+function box(x,y,z,sx,sy,sz,m){const o=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
+function platform(x,y,z,w=4,d=4){box(x,y-.18,z,w,.36,d,rock);box(x,y,z,w,.12,d,topGrass)}
+// start island and route
+platform(0,0,0,9,9);
+const routes=[[-2,1,-7,4,4],[2,2,-13,4,4],[-2,3,-19,4,4],[2,4,-25,4,4],[-1,5,-32,5,5],[3,6,-39,4,4],[0,7,-46,5,5]];
+routes.forEach(p=>platform(...p));
+for(let i=0;i<24;i++){const z=5-i*2.4;const h=1+Math.random()*4;const m=box((Math.random()-.5)*24,h/2,z,1.2+Math.random()*2,h,1.2+Math.random()*2,rock);m.material=mat(i%3?0x78909c:0x8a9ba5)}
+// clouds
+const cloudMat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:1});
+for(let i=0;i<22;i++){const group=new THREE.Group();for(let j=0;j<5;j++){const c=new THREE.Mesh(new THREE.SphereGeometry(1.2+Math.random()*.5,12,10),cloudMat);c.position.set(j*1.3,Math.random()*.5,Math.random()*1.3);group.add(c)}group.position.set((Math.random()-.5)*55,9+Math.random()*18,-Math.random()*65);scene.add(group)}
+// player body
+const player=new THREE.Group();scene.add(player);
+const skin=mat(0xffc38d),shirt=mat(0x2865db),pants=mat(0x25344b),dark=mat(0x243347),shoe=mat(0xeff5ff);
+const torso=new THREE.Mesh(new THREE.BoxGeometry(.65,.8,.38),shirt);torso.position.y=1.25;torso.castShadow=true;player.add(torso);
+const head=new THREE.Mesh(new THREE.SphereGeometry(.28,20,16),skin);head.position.y=1.85;head.castShadow=true;player.add(head);
+const hair=new THREE.Mesh(new THREE.SphereGeometry(.29,16,12),dark);hair.scale.set(1,.55,1);hair.position.y=2.02;player.add(hair);
+const limbs=[];
+function limb(w,h,d,m,x,y){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,0);o.castShadow=true;player.add(o);limbs.push(o);return o}
+const armL=limb(.18,.65,.18,skin,-.48,1.28),armR=limb(.18,.65,.18,skin,.48,1.28),legL=limb(.22,.65,.24,pants,-.19,.48),legR=limb(.22,.65,.24,pants,.19,.48);
+box(0,.1,0,.0,.0,.0,shirt); // no-op removed from scene by hidden tiny dimensions
+const shoeL=new THREE.Mesh(new THREE.BoxGeometry(.3,.13,.4),shoe);shoeL.position.set(-.19,.12,.07);player.add(shoeL);
+const shoeR=shoeL.clone();shoeR.position.x=.19;player.add(shoeR);
+player.position.set(0,.08,0);
+// collectible rings
+const coins=[];function coin(x,y,z){const o=new THREE.Mesh(new THREE.TorusGeometry(.38,.09,10,20),gold);o.position.set(x,y,z);o.castShadow=true;scene.add(o);coins.push(o)}
+for(let i=0;i<routes.length;i++){const p=routes[i];coin(p[0],p[1]+1.1,p[2])}
+coin(0,1.4,-3);
+let vy=0,onGround=true,score=0,coinCount=0,dead=false,highest=0;const keys={};let joy={x:0,y:0};const clock=new THREE.Clock();
+function jump(){if(onGround&&!dead){vy=8.5;onGround=false}}
+document.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.code==='Space'){e.preventDefault();jump()}});
+document.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+const jumpBtn=document.getElementById('jump');jumpBtn.addEventListener('pointerdown',e=>{e.preventDefault();jump()});
+const stick=document.getElementById('stick'),knob=document.getElementById('knob');let active=null;
+stick.addEventListener('pointerdown',e=>{active=e.pointerId;stick.setPointerCapture(active);moveStick(e)});
+stick.addEventListener('pointermove',e=>{if(active===e.pointerId)moveStick(e)});
+function moveStick(e){const r=stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy;const max=38,l=Math.hypot(dx,dy);if(l>max){dx*=max/l;dy*=max/l}joy={x:dx/max,y:dy/max};knob.style.transform=`translate(${dx}px,${dy}px)`}
+function resetStick(){active=null;joy={x:0,y:0};knob.style.transform='translate(0,0)'}
+stick.addEventListener('pointerup',resetStick);stick.addEventListener('pointercancel',resetStick);
+const message=document.getElementById('message');
+function end(){dead=true;message.style.display='block';document.getElementById('msgTitle').textContent='Adventure over!';document.getElementById('msgText').textContent='Coins collected: '+coinCount+' • Best height: '+Math.floor(highest)+'m'}
+document.getElementById('restart').onclick=()=>location.reload();
+function update(dt){
+ if(dead)return;
+ const forward=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0)-joy.y;
+ const side=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+joy.x;
+ const speed=5.5;player.position.x+=side*speed*dt;player.position.z-=forward*speed*dt;
+ player.position.x=THREE.MathUtils.clamp(player.position.x,-7,7);
+ vy-=19*dt;player.position.y+=vy*dt;onGround=false;
+ // landing detection on platform top
+ const all=[{x:0,y:0,z:0,w:9,d:9},...routes.map(p=>({x:p[0],y:p[1],z:p[2],w:p[3],d:p[4]}))];
+ if(vy<=0){for(const p of all){if(player.position.y<=p.y+.12&&player.position.y>=p.y-.35&&Math.abs(player.position.x-p.x)<p.w/2-.25&&Math.abs(player.position.z-p.z)<p.d/2-.25){player.position.y=p.y+.08;vy=0;onGround=true;break}}}
+ if(onGround){const t=clock.elapsedTime;armL.rotation.z=Math.sin(t*8)*.12;armR.rotation.z=-Math.sin(t*8)*.12;legL.rotation.x=Math.sin(t*8)*.08;legR.rotation.x=-Math.sin(t*8)*.08}else{armL.rotation.z=-.7;armR.rotation.z=.7}
+ if(player.position.y<-7)end();
+ highest=Math.max(highest,player.position.y);score=Math.max(score,Math.floor(highest*10));document.getElementById('score').textContent=score;
+ for(const c of coins){c.rotation.y+=dt*2.5;if(!c.visible)continue;if(player.position.distanceTo(c.position)<1.15){c.visible=false;coinCount++;document.getElementById('coins').textContent=coinCount}}
+ const target=new THREE.Vector3(player.position.x+side*.4,player.position.y+3.2,player.position.z+7.5);camera.position.lerp(target,1-Math.pow(.001,dt));camera.lookAt(player.position.x,player.position.y+1,player.position.z-1);
+}
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.035);update(dt);renderer.render(scene,camera)}
+camera.position.set(0,4,8);camera.lookAt(0,1,0);animate();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script>
+</body></html>
