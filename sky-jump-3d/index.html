@@ -52,7 +52,6 @@ const hair=new THREE.Mesh(new THREE.SphereGeometry(.29,16,12),dark);hair.scale.s
 const limbs=[];
 function limb(w,h,d,m,x,y){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,0);o.castShadow=true;player.add(o);limbs.push(o);return o}
 const armL=limb(.18,.65,.18,skin,-.48,1.28),armR=limb(.18,.65,.18,skin,.48,1.28),legL=limb(.22,.65,.24,pants,-.19,.48),legR=limb(.22,.65,.24,pants,.19,.48);
-box(0,.1,0,.0,.0,.0,shirt); // no-op removed from scene by hidden tiny dimensions
 const shoeL=new THREE.Mesh(new THREE.BoxGeometry(.3,.13,.4),shoe);shoeL.position.set(-.19,.12,.07);player.add(shoeL);
 const shoeR=shoeL.clone();shoeR.position.x=.19;player.add(shoeR);
 player.position.set(0,.08,0);
