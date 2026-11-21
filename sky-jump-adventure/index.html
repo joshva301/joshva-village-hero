@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Sky Jump Adventure</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#87d8ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#10233c;touch-action:none}
+#game{display:block;width:100%;height:100%;background:linear-gradient(#65c9ff 0%,#c8f2ff 72%,#f1fcff 100%)}
+.hud{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;gap:8px}
+.pill{background:#ffffffc9;border:1px solid #fff8;border-radius:16px;padding:8px 12px;font-weight:800;box-shadow:0 4px 14px #1d4f7030}
+#overlay{position:fixed;inset:0;display:grid;place-items:center;background:#13345b35;padding:20px}
+.panel{max-width:440px;width:100%;background:#ffffffed;border:2px solid #fff;border-radius:24px;padding:24px;text-align:center;box-shadow:0 20px 50px #1d4f7040}
+.panel h1{margin:0 0 8px;font-size:clamp(26px,7vw,38px)}.panel p{line-height:1.5;margin:8px 0 18px}
+button{border:0;border-radius:16px;padding:13px 22px;font-weight:900;font-size:16px;background:#176bd5;color:white;box-shadow:0 5px 0 #0d4894;touch-action:manipulation}
+button:active{transform:translateY(3px);box-shadow:0 2px 0 #0d4894}
+.controls{position:fixed;bottom:18px;left:18px;right:18px;display:flex;justify-content:space-between;align-items:end;pointer-events:none}
+.pad{display:flex;gap:12px}.control{pointer-events:auto;width:68px;height:68px;border-radius:22px;background:#ffffffb8;color:#17385a;border:2px solid #fff;box-shadow:0 5px 15px #123a5830;font-size:26px;display:grid;place-items:center;user-select:none}
+#jump{width:82px;height:82px;background:#176bd5;color:white;border-color:#ffffffa8}
+#pause{position:fixed;right:12px;top:64px;pointer-events:auto;padding:8px 12px;background:#fff;color:#18324d;box-shadow:none;border:1px solid #fff}
+@media(min-width:800px){.controls{max-width:760px;margin:auto}}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div class="hud"><div class="pill">⭐ <span id="stars">0</span></div><div class="pill">HEIGHT <span id="height">0</span> m</div><div class="pill">BEST <span id="best">0</span> m</div></div>
+<button id="pause">Ⅱ</button>
+<div class="controls"><div class="pad"><button class="control" id="left">◀</button><button class="control" id="right">▶</button></div><button class="control" id="jump">⬆</button></div>
+<div id="overlay"><div class="panel"><h1>☁️ Sky Jump Adventure</h1><p>Hop across floating platforms, collect stars, and climb as high as you can!</p><p><b>Controls:</b> Left / Right to move. Tap Jump or press Space.</p><button id="start">Start Adventure</button></div></div>
+<script>
+(()=> {
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),overlay=document.getElementById('overlay');
+const starsEl=document.getElementById('stars'),heightEl=document.getElementById('height'),bestEl=document.getElementById('best');
+let W=0,H=0,scale=1,player,platforms,stars,score,best=Number(localStorage.skyJumpBest||0),camera=0,running=false,paused=false,keys={},last=0;
+bestEl.textContent=best;
+function resize(){W=innerWidth;H=innerHeight;scale=devicePixelRatio||1;canvas.width=W*scale;canvas.height=H*scale;ctx.setTransform(scale,0,0,scale,0,0)}
+addEventListener('resize',resize);resize();
+function reset(){player={x:W*.5,y:H*.65,vx:0,vy:0,r:16};platforms=[];stars=[];score=0;camera=0;platforms.push({x:W*.25,y:H*.82,w:W*.5,h:16,type:0});let y=H*.72;while(y>-H*2){addPlatform(y);y-=100+Math.random()*55}starsEl.textContent=0;heightEl.textContent=0}
+function addPlatform(y){let w=65+Math.random()*55,x=Math.random()*(W-w);platforms.push({x,y,w,h:14,type:Math.random()>.8?1:0});if(Math.random()>.35)stars.push({x:x+w/2,y:y-30,r:9,taken:false})}
+function start(){reset();running=true;paused=false;overlay.style.display='none';last=performance.now();requestAnimationFrame(loop)}
+function loop(t){if(!running)return;let dt=Math.min((t-last)/16.67,2);last=t;if(!paused)update(dt);draw();requestAnimationFrame(loop)}
+function update(dt){
+ player.vx=(keys.left?-4.5:0)+(keys.right?4.5:0);player.x+=player.vx*dt;if(player.x<-player.r)player.x=W+player.r;if(player.x>W+player.r)player.x=-player.r;
+ player.vy+=.38*dt;player.y+=player.vy*dt;
+ if(player.vy>0){for(const p of platforms){if(player.x+player.r>p.x&&player.x-player.r<p.x+p.w&&player.y+player.r>=p.y&&player.y+player.r-player.vy*dt<=p.y+4){player.y=p.y-player.r;player.vy=-10.8;break}}}
+ if(player.y-camera<H*.42){camera=player.y-H*.42}
+ for(const s of stars){if(!s.taken&&Math.hypot(player.x-s.x,player.y-s.y)<player.r+s.r){s.taken=true;score++;starsEl.textContent=score}}
+ const topY=camera-80;platforms=platforms.filter(p=>p.y<camera+H+100);stars=stars.filter(s=>s.y<camera+H+100);
+ while(platforms.length<14){let highest=Math.min(...platforms.map(p=>p.y));addPlatform(highest-95-Math.random()*55)}
+ let meters=Math.max(0,Math.floor(-camera/10));heightEl.textContent=meters;if(meters>best){best=meters;bestEl.textContent=best;localStorage.skyJumpBest=best}
+ if(player.y-camera>H+80){running=false;overlay.style.display='grid';overlay.querySelector('h1').textContent='Adventure Over!';overlay.querySelector('p').textContent='You climbed '+meters+' m and collected '+score+' stars. Try again to beat your best!';overlay.querySelector('button').textContent='Play Again'}
+}
+function draw(){
+ ctx.clearRect(0,0,W,H);
+ // soft clouds
+ for(let i=0;i<8;i++){let x=(i*173-camera*.12)% (W+180);if(x<0)x+=W+180;let y=(i*97-camera*.18)% (H+80);ctx.fillStyle='#ffffff85';ctx.beginPath();ctx.ellipse(x,y,34,14,0,0,Math.PI*2);ctx.ellipse(x+22,y-7,24,17,0,0,Math.PI*2);ctx.ellipse(x-20,y-4,23,16,0,0,Math.PI*2);ctx.fill()}
+ for(const p of platforms){let y=p.y-camera;if(y<-30||y>H+30)continue;ctx.fillStyle=p.type?'#f4a261':'#43b581';ctx.beginPath();ctx.roundRect(p.x,y,p.w,p.h,8);ctx.fill();ctx.fillStyle='#ffffff65';ctx.fillRect(p.x+8,y+3,p.w-16,3)}
+ for(const s of stars){if(s.taken)continue;let y=s.y-camera;ctx.fillStyle='#ffcf33';ctx.strokeStyle='#fff7';ctx.lineWidth=2;ctx.beginPath();for(let i=0;i<10;i++){let a=-Math.PI/2+i*Math.PI/5,r=i%2?s.r*.45:s.r;ctx.lineTo(s.x+Math.cos(a)*r,y+Math.sin(a)*r)}ctx.closePath();ctx.fill();ctx.stroke()}
+ // player
+ let py=player.y-camera;ctx.fillStyle='#174fba';ctx.beginPath();ctx.arc(player.x,py,player.r,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(player.x-5,py-4,4,0,Math.PI*2);ctx.arc(player.x+5,py-4,4,0,Math.PI*2);ctx.fill();ctx.fillStyle='#123';ctx.beginPath();ctx.arc(player.x-5,py-4,1.8,0,Math.PI*2);ctx.arc(player.x+5,py-4,1.8,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(player.x,py+3,5,.15,Math.PI-.15);ctx.stroke();
+}
+function bindButton(id,key){let b=document.getElementById(id);b.addEventListener('pointerdown',e=>{e.preventDefault();keys[key]=true});for(const ev of ['pointerup','pointercancel','pointerleave'])b.addEventListener(ev,()=>keys[key]=false)}
+bindButton('left','left');bindButton('right','right');
+document.getElementById('jump').addEventListener('pointerdown',e=>{e.preventDefault();if(running&&player.vy>0)player.vy=-10.8});
+addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.left=e.code==='ArrowLeft'||e.code==='KeyA';keys.right=e.code==='ArrowRight'||e.code==='KeyD';if(e.code==='Space'&&running&&player.vy>0)player.vy=-10.8});
+addEventListener('keyup',e=>{if(e.code==='ArrowLeft'||e.code==='KeyA')keys.left=false;if(e.code==='ArrowRight'||e.code==='KeyD')keys.right=false});
+document.getElementById('start').onclick=start;
+document.getElementById('pause').onclick=()=>{if(!running)return;paused=!paused;document.getElementById('pause').textContent=paused?'▶':'Ⅱ';if(paused){overlay.style.display='grid';overlay.querySelector('h1').textContent='Paused';overlay.querySelector('p').textContent='Take a break, then continue your adventure.';overlay.querySelector('button').textContent='Resume';overlay.querySelector('button').onclick=()=>{paused=false;overlay.style.display='none';last=performance.now()}}else overlay.style.display='none'};
+draw();
+})();
+</script>
+</body>
+</html>
