@@ -28,7 +28,7 @@ jobs:
       - name: Upload game site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: sky-jump-adventure
+          path: sky-jump-3d
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
